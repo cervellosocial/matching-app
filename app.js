@@ -112,13 +112,22 @@ function evaluarCondicionales() {
 
 window.guardarYEmparejar = async function() {
   const nombre = document.getElementById("username").value.trim();
-  if (!nombre) return alert("Por favor, introduce tu nombre.");
+  const edad = parseInt(document.getElementById("user-age").value);
+  const minEdad = parseInt(document.getElementById("min-age").value);
+  const maxEdad = parseInt(document.getElementById("max-age").value);
 
-  // VALIDACIÓN: Verificar que todas las preguntas visibles hayan sido respondidas
+  // 1. Validaciones de datos principales
+  if (!nombre) return alert("Por favor, introduce tu nombre.");
+  if (isNaN(edad) || edad < 18) return alert("Por favor, introduce una edad válida (mínimo 18 años).");
+  if (isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) {
+    return alert("Por favor, selecciona un rango de edad válido.");
+  }
+
+  // 2. Validación de preguntas del cuestionario
   const respuestas = {};
   for (const q of preguntas) {
     const bloque = document.getElementById(`block-${q.id}`);
-    const estaVisible = !bloque.classList.contains("hidden");
+    const estaVisible = bloque && !bloque.classList.contains("hidden");
 
     if (estaVisible) {
       const seleccion = document.querySelector(`input[name="${q.id}"]:checked`);
@@ -133,7 +142,13 @@ window.guardarYEmparejar = async function() {
   submitBtn.innerText = "Guardando...";
   submitBtn.disabled = true;
 
-  const usuarioActual = { nombre, respuestas, fecha: Date.now() };
+  const usuarioActual = { 
+    nombre, 
+    edad, 
+    rangoBuscado: { min: minEdad, max: maxEdad }, 
+    respuestas, 
+    fecha: Date.now() 
+  };
 
   try {
     const dbRef = ref(db);
@@ -147,9 +162,19 @@ window.guardarYEmparejar = async function() {
 
     await push(ref(db, "usuarios"), usuarioActual);
 
-    // Comparación de respuestas
+    // 3. Comparación con FILTRO DE EDAD RECRÍPROCO
     const resultados = usuariosGuardados
       .filter(u => u.nombre.toLowerCase() !== nombre.toLowerCase())
+      .filter(u => {
+        // Verificar si existe el dato de edad en usuarios antiguos
+        if (!u.edad || !u.rangoBuscado) return false; 
+
+        // Cumple si MI edad está en SU rango Y SU edad está en MI rango
+        const yoLeEncajo = usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max;
+        const elMeEncaja = u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
+
+        return yoLeEncajo && elMeEncaja;
+      })
       .map(u => {
         let aciertos = 0;
         let preguntasComparables = 0;
@@ -172,7 +197,7 @@ window.guardarYEmparejar = async function() {
           ? Math.round((aciertos / preguntasComparables) * 100) 
           : 0;
 
-        return { nombre: u.nombre, porcentaje };
+        return { nombre: `${u.nombre} (${u.edad} años)`, porcentaje };
       })
       .sort((a, b) => b.porcentaje - a.porcentaje);
 
