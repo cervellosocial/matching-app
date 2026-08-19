@@ -283,7 +283,7 @@ function mostrarResultados(resultados, miNombre) {
         </div>
         
         <div class="icebreaker-box">
-          <p class="icebreaker-question"><b>🎲 Pregunta Rompehielos para ${r.nombre}:</b></p>
+          <p class="icebreaker-question"><b>🎲 Pregunta aleatoria para ${r.nombre}:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
           <button id="btn-send-${index}">
             🎲 Enviar pregunta a ${r.nombre} para romper el hielo
@@ -398,10 +398,10 @@ async function cargarBuzon(nombreUsuario) {
         } else {
           return `
             <div class="match-item gilicrush-item">
-              <p><b>🎲 ¡${n.de} te ha enviado una pregunta rompehielos! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
+              <p><b>🎲 ¡${n.de} te ha enviado una pregunta aleatoria! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
               <p class="icebreaker-question"><i>"${n.pregunta}"</i></p>
               <div class="reply-box">
-                <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta para ${n.de}..." />
+                <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta sin pensarlo demasiado ${n.de}..." />
                 <button id="btn-reply-${key}">Responder a ${n.de}</button>
               </div>
             </div>
@@ -437,7 +437,7 @@ async function cargarBuzon(nombreUsuario) {
     });
 
   } else {
-    list.innerHTML = "<p>Tu buzón está vacío por el momento.</p>";
+    list.innerHTML = "<p>Tu buzón está tan vacío como el cerebro de algunos influencers.</p>";
   }
 }
 
