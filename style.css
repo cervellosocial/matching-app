@@ -1,155 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Metamorphous&family=Plus+Jakarta+Sans:wght@400;600&display=swap');
 
 :root {
-  --bg-dark: #05050a;
-  --card-bg: rgba(10, 10, 18, 0.94);
-  --accent-cyan: #00f0ff;
-  --accent-magenta: #ff0055;
-  --accent-yellow: #facc15;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
-  --text-primary: #f8fafc;
+  --bg-dark: #0a0a0c;
+  --card-bg: #121118;
+  --accent-purple: #8b5cf6;
+  --accent-red: #991b1b;
+  --text-primary: #e2e8f0;
   --text-secondary: #94a3b8;
-  --border-cyber: #00f0ff;
-  --border-magenta: #ff0055;
-  --glow-cyan: rgba(0, 240, 255, 0.5);
-  --glow-magenta: rgba(255, 0, 85, 0.5);
+  --border-glow: #3b0764;
 }
 
 body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   margin: 0;
   padding: 20px;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Fondo estilo Red Neural / Megaciudad de Noche */
   background-image: 
-    radial-gradient(circle at 50% 0%, #1e0038 0%, transparent 70%),
-    radial-gradient(circle at 80% 100%, #002b3d 0%, transparent 60%),
-    radial-gradient(circle at 10% 50%, #17001e 0%, transparent 50%);
-  background-attachment: fixed;
+    radial-gradient(circle at 50% 0%, #2e1065 0%, transparent 60%),
+    radial-gradient(circle at 80% 100%, #450a0a 0%, transparent 50%);
 }
 
 .container {
   width: 100%;
-  max-width: 560px;
+  max-width: 550px;
 }
 
-/* Título estilo Neón Holográfico */
 h1 {
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
+  font-family: 'Metamorphous', serif;
   text-align: center;
-  font-size: 2.3rem;
-  color: var(--accent-cyan);
-  text-shadow: 
-    0 0 10px var(--accent-cyan),
-    0 0 20px var(--accent-magenta),
-    0 0 35px var(--accent-cyan);
+  font-size: 2.4rem;
+  color: #f8fafc;
+  text-shadow: 0 0 15px rgba(139, 92, 246, 0.6), 0 0 25px rgba(153, 27, 27, 0.4);
   margin-bottom: 25px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
-/* Tarjeta / Interfaz Neural Netrunner */
 .card {
   background: var(--card-bg);
-  border: 1px solid var(--accent-cyan);
-  border-radius: 2px;
+  border: 1px solid #2e1065;
+  border-radius: 12px;
   padding: 30px;
-  box-shadow: 
-    0 0 25px rgba(0, 0, 0, 0.95),
-    inset 0 0 15px rgba(0, 240, 255, 0.1),
-    0 0 15px var(--glow-cyan);
-  backdrop-filter: blur(12px);
-  position: relative;
-  /* Corte diagonal estilo Cyberpunk */
-  clip-path: polygon(
-    0 0, 
-    calc(100% - 15px) 0, 100% 15px, 
-    100% 100%, 
-    15px 100%, 0 calc(100% - 15px)
-  );
-}
-
-/* Marcadores de Estado Cibernético en esquinas */
-.card::before {
-  content: "SYS.ON //";
-  position: absolute;
-  top: 6px;
-  left: 10px;
-  color: var(--accent-yellow);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-}
-
-.card::after {
-  content: "v2.026";
-  position: absolute;
-  top: 6px;
-  right: 15px;
-  color: var(--accent-magenta);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(88, 28, 135, 0.2);
+  backdrop-filter: blur(5px);
 }
 
 h2 {
-  font-family: 'Orbitron', sans-serif;
-  color: var(--accent-yellow);
-  border-bottom: 2px solid var(--accent-magenta);
-  padding-bottom: 8px;
-  margin-top: 15px;
-  letter-spacing: 1.5px;
-  font-size: 1.2rem;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+  font-family: 'Cinzel', serif;
+  color: #f1f5f9;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 10px;
+  margin-top: 0;
+  letter-spacing: 1px;
 }
 
-/* Inputs de Texto estilo Terminal Cyber/Console */
-input[type="text"], input[type="password"] {
+/* Input de nombre */
+input[type="text"] {
   width: 100%;
   padding: 12px;
-  background-color: #030307;
-  border: 1px solid var(--accent-cyan);
-  border-radius: 0px;
-  color: var(--accent-cyan);
-  font-family: 'Share Tech Mono', monospace;
+  background-color: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #fff;
   font-size: 1rem;
   box-sizing: border-box;
   margin-bottom: 20px;
   transition: all 0.3s ease;
 }
 
-input[type="text"]:focus, input[type="password"]:focus {
+input[type="text"]:focus {
   outline: none;
-  border-color: var(--accent-magenta);
-  box-shadow: 0 0 15px var(--glow-magenta);
-  background-color: #090914;
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
-/* Bloques de Preguntas / Enlaces Neurales */
+/* Bloques de Preguntas */
 .question-block {
-  background: rgba(15, 15, 30, 0.8);
-  border-left: 4px solid var(--accent-magenta);
-  border-top: 1px solid rgba(0, 240, 255, 0.2);
-  border-right: 1px solid rgba(0, 240, 255, 0.2);
-  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  background: #181824;
+  border-left: 3px solid var(--accent-purple);
   padding: 15px;
   margin-bottom: 15px;
-  border-radius: 0px;
+  border-radius: 0 8px 8px 0;
   transition: all 0.3s ease;
 }
 
 .question-block p {
   margin: 0 0 10px 0;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #fff;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  color: #f3f4f6;
 }
 
 .options {
@@ -159,102 +102,88 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .options label {
   flex: 1;
-  background: #05050d;
+  background: #0f0e17;
   padding: 10px;
-  border: 1px solid #1e1e38;
+  border-radius: 6px;
+  border: 1px solid #2e1065;
   cursor: pointer;
   font-size: 0.95rem;
-  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
 }
 
 .options label:hover {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-  background: #0d0d24;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+  border-color: var(--accent-purple);
+  background: #1e1b2e;
 }
 
 .options input[type="radio"] {
-  accent-color: var(--accent-magenta);
+  accent-color: var(--accent-purple);
 }
 
-/* Botones de Ejecución de Protocolos */
+/* Botones con estilo oscuro/gótico */
 button {
   width: 100%;
   padding: 14px;
-  background: var(--accent-magenta);
+  background: linear-gradient(135deg, #4c1d95 0%, #881337 100%);
   color: #ffffff;
   border: none;
-  border-radius: 0px;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
   cursor: pointer;
   margin-top: 15px;
-  box-shadow: 0 0 15px var(--glow-magenta);
-  transition: all 0.2s ease;
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background: var(--accent-cyan);
-  color: #000;
-  box-shadow: 0 0 25px var(--glow-cyan);
+  background: linear-gradient(135deg, #5b21b6 0%, #9f1239 100%);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
   transform: translateY(-1px);
 }
 
 button:disabled {
-  background: #1e1e2e;
-  color: #4a4a6a;
+  background: #334155;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-/* Botones Secundarios */
-.secondary-btn {
-  background: transparent !important;
-  border: 1px solid var(--accent-cyan) !important;
-  color: var(--accent-cyan) !important;
+/* Lista de Compatibilidades (Matches) */
+.match-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #181824;
+  border: 1px solid #2e1065;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
 }
 
-.secondary-btn:hover {
-  background: var(--accent-cyan) !important;
-  color: #000 !important;
-  box-shadow: 0 0 20px var(--glow-cyan) !important;
+.match-item .percentage {
+  color: #c084fc;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
 }
-
-.cancel-btn {
-  background: transparent !important;
-  border: 1px solid #334155 !important;
-  color: var(--text-secondary) !important;
-}
-
-.cancel-btn:hover {
-  background: #0f172a !important;
-  color: #fff !important;
-}
-
-/* Edades e Inputs Numéricos */
 .age-block {
   margin-bottom: 15px;
-  background: rgba(15, 15, 30, 0.8);
+  background: #181824;
   padding: 12px;
-  border: 1px solid #1e1e38;
+  border-radius: 6px;
+  border: 1px solid #2e1065;
 }
 
 .age-block label {
   display: block;
   margin-bottom: 8px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-family: 'Cinzel', serif;
+  color: #e2e8f0;
 }
 
 .range-inputs {
@@ -264,103 +193,31 @@ button:disabled {
 }
 
 .range-inputs span {
-  color: var(--accent-yellow);
-  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-family: 'Cinzel', serif;
 }
 
 input[type="number"] {
   width: 100%;
   padding: 10px;
-  background-color: #030307;
-  border: 1px solid var(--accent-cyan);
-  color: var(--accent-cyan);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1rem;
+  background-color: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.95rem;
   box-sizing: border-box;
 }
 
 input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent-magenta);
-  box-shadow: 0 0 10px var(--glow-magenta);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
-
-/* Lista de Sintonías / Matches de Neón */
-.match-item {
-  display: flex;
-  flex-direction: column;
-  padding: 14px;
-  background: #090914;
-  border: 1px solid var(--accent-cyan);
-  margin-bottom: 12px;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-}
-
-.match-header h3 {
-  margin: 0 0 5px 0;
-  color: var(--accent-cyan);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-}
-
-.match-item .percentage {
-  color: var(--accent-yellow);
-  font-family: 'Share Tech Mono', monospace;
-  font-weight: bold;
-  font-size: 1.1rem;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
-}
-
-/* Caja Rompehielos (Transmisión Encriptada) */
-.icebreaker-box {
-  background: #030307;
-  border: 1px dashed var(--accent-magenta);
-  padding: 12px;
-  margin-top: 10px;
-}
-
-.icebreaker-question {
-  color: var(--text-secondary);
-  font-size: 0.88rem;
-  margin-bottom: 4px;
-}
-
-.question-text {
-  font-size: 0.95rem;
-  color: var(--accent-cyan);
-  font-family: 'Share Tech Mono', monospace;
-  margin-bottom: 10px;
-}
-
-.reply-box input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--accent-cyan);
-  background: #090914;
-  color: var(--accent-cyan);
-  font-family: 'Share Tech Mono', monospace;
-  margin-bottom: 8px;
-  box-sizing: border-box;
-}
-
-.reply-box button, .icebreaker-box button {
-  background: var(--accent-cyan);
-  color: #000;
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  margin: 0;
-  box-shadow: 0 0 10px var(--glow-cyan);
-}
-
-/* Estilos para Gilicrush / Incompatibilidad / Anomalía Neural */
+/* Estilos especiales para Gilicrush */
 .match-item.gilicrush-item {
-  border: 1px solid var(--accent-red);
-  background: linear-gradient(135deg, #180306 0%, #2a050b 100%);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-}
-
-.match-item.gilicrush-item .match-header h3 {
-  color: #f87171;
+  border: 1px solid #991b1b;
+  background: linear-gradient(135deg, #181824 0%, #2a0808 100%);
+  box-shadow: 0 0 10px rgba(153, 27, 27, 0.4);
 }
 
 .gilicrush-badge {
@@ -369,16 +226,17 @@ input[type="number"]:focus {
   color: #fecaca;
   font-size: 0.75rem;
   padding: 2px 6px;
+  border-radius: 4px;
   margin-left: 8px;
-  border: 1px solid #ef4444;
-  font-family: 'Share Tech Mono', monospace;
+  border: 1px solid #dc2626;
 }
 
 .percentage.gilicrush-text {
   color: #f87171;
-  text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
 }
 
 .hidden {
   display: none !important;
 }
+
