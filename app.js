@@ -259,7 +259,7 @@ function mostrarResultados(resultados, miNombre) {
         <div class="icebreaker-box">
           <p class="icebreaker-question"><b>🎲 Pregunta Rompehielos para ${r.nombre}:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
-          <button id="btn-send-${index}" onclick="enviarPreguntaAC('${r.nombre}', '${miNombre}', '${preguntaElegida.replace(/'/g, "\\'")}', ${index})">
+          <button id="btn-send-${index}" onclick="enviarPreguntaAC('${r.nombre}', '${miNombre}', '${preguntaElegida.replace(/'/g, "\\'")}', '${textoPorcentaje}', ${index})">
             🎲 Enviar pregunta a ${r.nombre} para romper el hielo
           </button>
         </div>
@@ -268,8 +268,8 @@ function mostrarResultados(resultados, miNombre) {
   }).join('');
 }
 
-// Usuario A envía la pregunta para que Usuario C la responda
-window.enviarPreguntaAC = async function(destinoNombre, miNombre, pregunta, index) {
+// Usuario A envía la pregunta guardando también el porcentaje de compatibilidad
+window.enviarPreguntaAC = async function(destinoNombre, miNombre, pregunta, porcentajeText, index) {
   const btnEl = document.getElementById(`btn-send-${index}`);
   btnEl.disabled = true;
   btnEl.innerText = "Enviando...";
@@ -279,7 +279,8 @@ window.enviarPreguntaAC = async function(destinoNombre, miNombre, pregunta, inde
       de: miNombre,
       tipo: "Pregunta 🎲",
       pregunta: pregunta,
-      respuestaReceptor: "", // Vacío hasta que C responda
+      porcentaje: porcentajeText, // Guardado para evitar 'undefined'
+      respuestaReceptor: "",
       respondido: false,
       fecha: Date.now()
     });
@@ -342,32 +343,42 @@ async function cargarBuzon(nombreUsuario) {
 
     list.innerHTML = notifKeys.map(key => {
       const n = notifsObj[key];
+      const porcentajeDisplay = n.porcentaje ? n.porcentaje : "";
 
       if (n.tipo === "Pregunta 🎲") {
         if (n.respondido) {
           return `
             <div class="match-item">
-              <p><b>🎲 Pregunta de ${n.de}:</b> <i>"${n.pregunta}"</i></p>
+              <p><b>🎲 Pregunta de ${n.de} ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}:</b> <i>"${n.pregunta}"</i></p>
               <p style="color: #22c55e;"><b>Tu respuesta enviada:</b> "${n.respuestaReceptor}"</p>
             </div>
           `;
         } else {
           return `
             <div class="match-item gilicrush-item">
-              <p><b>🎲 ¡${n.de} te ha enviado una pregunta rompehielos!</b></p>
+              <p><b>🎲 ¡${n.de} te ha enviado una pregunta rompehielos! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
               <p class="icebreaker-question"><i>"${n.pregunta}"</i></p>
               <div class="reply-box">
                 <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta para ${n.de}..." />
-                <button onclick="responderPregunta('${nombreUsuario}', '${key}', '${n.de}')">Responder a ${n.de}</button>
+                <button onclick="responderPregunta('${nombreUsuario}', '${key}', '${n.de}', '${porcentajeDisplay.replace(/'/g, "\\'")}')">Responder a ${n.de}</button>
               </div>
             </div>
           `;
         }
       }
 
+      if (n.tipo === "Respuesta 💬") {
+        return `
+          <div class="match-item">
+            <p><b>💬 ¡${n.de} ha respondido a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
+            <p class="question-text"><b>Respuesta:</b> "${n.respuesta}"</p>
+          </div>
+        `;
+      }
+
       return `
         <div class="match-item">
-          <p><b>${n.tipo}</b> con <b>${n.de}</b> (${n.porcentaje}%)</p>
+          <p><b>${n.tipo}</b> con <b>${n.de}</b> ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</p>
         </div>
       `;
     }).join('');
@@ -377,8 +388,8 @@ async function cargarBuzon(nombreUsuario) {
   }
 }
 
-// Usuario C responde a la pregunta de Usuario A
-window.responderPregunta = async function(miNombre, notifKey, nombreEmisor) {
+// Usuario C responde a la pregunta de Usuario A transmitiendo el porcentaje
+window.responderPregunta = async function(miNombre, notifKey, nombreEmisor, porcentajeText) {
   const inputEl = document.getElementById(`reply-input-${notifKey}`);
   const respuestaText = inputEl ? inputEl.value.trim() : "";
 
@@ -393,16 +404,17 @@ window.responderPregunta = async function(miNombre, notifKey, nombreEmisor) {
     updates[`notificaciones/${miNombre}/${notifKey}/respondido`] = true;
     await update(ref(db), updates);
 
-    // 2. Enviar una notificación con la respuesta al buzón de Usuario A
+    // 2. Enviar la notificación con la respuesta y el porcentaje a Usuario A
     await push(ref(db, `notificaciones/${nombreEmisor.toLowerCase()}`), {
       de: miNombre,
       tipo: "Respuesta 💬",
       respuesta: respuestaText,
+      porcentaje: porcentajeText || "",
       fecha: Date.now()
     });
 
     alert("¡Respuesta enviada con éxito!");
-    cargarBuzon(miNombre); // Recargar buzón
+    cargarBuzon(miNombre);
   } catch (e) {
     console.error(e);
     alert("Error al responder la pregunta.");
