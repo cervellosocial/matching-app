@@ -3,51 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MatchMaker - Emparejamiento por Respuestas</title>
+  <title>Crush y Gilicrush 🖤</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Crush y Gilicrush 💘</h1>
+    <h1>Crussh y Gilicrush 🖤</h1>
+
+    <!-- Selector de Modo -->
+    <div id="mode-selector" class="card">
+      <h2>¿Qué quieres hacer?</h2>
+      <button onclick="mostrarSeccion('quiz-section')">📜 Hacer el Test / Crear Perfil</button>
+      <button onclick="mostrarSeccion('login-section')" class="secondary-btn">📬 Consultar mi Buzón (PIN)</button>
+    </div>
 
     <!-- Formulario de Registro y Cuestionario -->
-    <div id="quiz-section" class="card">
+    <div id="quiz-section" class="card hidden">
       <h2>Completa tu Perfil</h2>
 
-      <!-- Nombre -->
       <div class="age-block">
         <label for="username"><b>Tu nombre:</b></label>
         <input type="text" id="username" placeholder="Escribe tu nombre" required>
       </div>
 
-      <!-- Edad del usuario -->
+      <div class="age-block">
+        <label for="user-pin"><b>Crea un PIN secreto (4 dígitos):</b></label>
+        <input type="password" id="user-pin" maxlength="4" placeholder="Ej. 1234" required>
+      </div>
+
       <div class="age-block">
         <label for="user-age"><b>Tu edad:</b></label>
         <input type="number" id="user-age" min="18" max="99" placeholder="Ej. 25" required>
       </div>
 
-      <!-- Rango de edad buscado -->
       <div class="age-block">
         <label><b>Rango de edad que te interesa:</b></label>
         <div class="range-inputs">
-          <input type="number" id="min-age" min="18" max="99" placeholder="Mín (ej. 20)" required>
+          <input type="number" id="min-age" min="18" max="99" placeholder="Mín" required>
           <span>a</span>
-          <input type="number" id="max-age" min="18" max="99" placeholder="Máx (ej. 30)" required>
+          <input type="number" id="max-age" min="18" max="99" placeholder="Máx" required>
         </div>
       </div>
       
-      <!-- Contenedor donde se insertan las preguntas de app.js -->
       <div id="questions-container"></div>
       
       <button id="submit-btn" onclick="guardarYEmparejar()">Guardar y Buscar Matches</button>
+      <button onclick="mostrarSeccion('mode-selector')" class="cancel-btn">Volver</button>
+    </div>
+
+    <!-- Acceso al Buzón -->
+    <div id="login-section" class="card hidden">
+      <h2>Consulta tu Buzón</h2>
+      <div class="age-block">
+        <label for="login-name"><b>Tu nombre registrado:</b></label>
+        <input type="text" id="login-name" placeholder="Tu nombre">
+      </div>
+      <div class="age-block">
+        <label for="login-pin"><b>Tu PIN (4 dígitos):</b></label>
+        <input type="password" id="login-pin" maxlength="4" placeholder="****">
+      </div>
+      <button onclick="accederBuzon()">Entrar a mi Buzón</button>
+      <button onclick="mostrarSeccion('mode-selector')" class="cancel-btn">Volver</button>
+    </div>
+
+    <!-- Buzón Privado de Notificaciones -->
+    <div id="mailbox-section" class="card hidden">
+      <h2>📬 Tu Buzón Secreto</h2>
+      <div id="notifications-list"></div>
+      <button onclick="mostrarSeccion('mode-selector')">Volver al inicio</button>
     </div>
 
     <!-- Resultados de Emparejamiento -->
     <div id="results-section" class="card hidden">
-      <h2>Tus Compatibilidades</h2>
+      <h2>🎉 ¡Tus Matches Encontrados!</h2>
       <div id="matches-list"></div>
-      <button onclick="reiniciar()">Volver al cuestionario</button>
+      <button onclick="mostrarSeccion('mode-selector')">Volver al inicio</button>
     </div>
+
   </div>
 
   <script type="module" src="app.js"></script>
