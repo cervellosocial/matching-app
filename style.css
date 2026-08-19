@@ -1,0 +1,77 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+}
+
+h1 { text-align: center; color: #38bdf8; }
+
+.card {
+  background: #1e293b;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: white;
+  box-sizing: border-box;
+}
+
+.question-block {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #334155;
+}
+
+.options {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #0284c7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover { background: #0369a1; }
+
+.hidden { display: none; }
+
+.match-item {
+  background: #0f172a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.percentage {
+  font-weight: bold;
+  color: #4ade80;
+}
