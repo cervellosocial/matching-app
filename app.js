@@ -1,6 +1,6 @@
-// 1. IMPORTACIONES DE FIREBASE (Todas vía CDN oficial)
+// 1. IMPORTACIONES DE FIREBASE (Con soporte para escucha en tiempo real 'onValue')
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -19,13 +19,12 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
+let listenerChatActivo = null; // Para limpiar escuchas cuando cambiemos de pantalla
+let usuarioActualGlobal = null;
+
 signInAnonymously(auth)
-  .then(() => {
-    console.log("Sesión anónima iniciada con éxito en Firebase");
-  })
-  .catch((error) => {
-    console.error("Error en autenticación anónima:", error);
-  });
+  .then(() => console.log("Sesión anónima iniciada"))
+  .catch((e) => console.error("Error Auth:", e));
 
 // 4. DATOS Y PREGUNTAS
 const preguntasRompehielos = [
@@ -37,76 +36,34 @@ const preguntasRompehielos = [
 ];
 
 const preguntas = [
-  { 
-    id: "q1", 
-    texto: "¿Prefieres obedecer o ser obedecido?", 
-    opA: "Obedecer 🙇", 
-    opB: "Ser obedecido 👑", 
-    regla: "opuesto" 
-  },
-  { 
-    id: "q2", 
-    texto: "¿Te gustan las inmovilizaciones?", 
-    opA: "Sí ⛓️", 
-    opB: "No 🚫", 
-    regla: "igual" 
-  },
-  { 
-    id: "q3", 
-    texto: "¿Restricciones sensoriales?", 
-    opA: "Sí 🙈", 
-    opB: "No 🚫", 
-    regla: "igual" 
-  },
-  { 
-    id: "q4", 
-    texto: "¿Te gusta la humillación suave?", 
-    opA: "Sí 😳", 
-    opB: "No 🚫", 
-    regla: "igual" 
-  },
-  { 
-    id: "q5", 
-    texto: "¿Prefieres 24/7 o sesiones puntuales?", 
-    opA: "24/7 ⏰", 
-    opB: "Sesiones puntuales 📅", 
-    regla: "igual" 
-  },
-  { 
-    id: "q6", 
-    texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", 
-    opA: "Sí 🗳️", 
-    opB: "No 🚫", 
-    regla: "igual" 
-  },
-  { 
-    id: "q6_sub", 
-    texto: "¿De derechas o de izquierdas?", 
-    opA: "Derechas ➡️", 
-    opB: "Izquierdas ⬅️", 
-    regla: "igual", 
-    dependeDe: { preguntaId: "q6", valorRequerido: "A" } 
-  }
+  { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
+  { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
+  { id: "q3", texto: "¿Restricciones sensoriales?", opA: "Sí 🙈", opB: "No 🚫", regla: "igual" },
+  { id: "q4", texto: "¿Te gusta la humillación suave?", opA: "Sí 😳", opB: "No 🚫", regla: "igual" },
+  { id: "q5", texto: "¿Prefieres 24/7 o sesiones puntuales?", opA: "24/7 ⏰", opB: "Sesiones puntuales 📅", regla: "igual" },
+  { id: "q6", texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", opA: "Sí 🗳️", opB: "No 🚫", regla: "igual" },
+  { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } }
 ];
 
-// 5. LÓGICA DE LA APLICACIÓN
+// 5. HELPER CHAT ID (Genera identificador único entre dos usuarios alfabetizado)
+function obtenerChatId(user1, user2) {
+  return [user1.toLowerCase(), user2.toLowerCase()].sort().join("_");
+}
 
+// 6. LÓGICA GENERAL
 function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
 
-  container.innerHTML = preguntas.map(q => {
-    const esCondicional = q.dependeDe ? "hidden" : "";
-    return `
-      <div class="question-block ${esCondicional}" id="block-${q.id}">
-        <p><b>${q.texto}</b></p>
-        <div class="options">
-          <label><input type="radio" name="${q.id}" value="A"> ${q.opA}</label>
-          <label><input type="radio" name="${q.id}" value="B"> ${q.opB}</label>
-        </div>
+  container.innerHTML = preguntas.map(q => `
+    <div class="question-block ${q.dependeDe ? "hidden" : ""}" id="block-${q.id}">
+      <p><b>${q.texto}</b></p>
+      <div class="options">
+        <label><input type="radio" name="${q.id}" value="A"> ${q.opA}</label>
+        <label><input type="radio" name="${q.id}" value="B"> ${q.opB}</label>
       </div>
-    `;
-  }).join('');
+    </div>
+  `).join('');
 
   container.addEventListener("change", evaluarCondicionales);
 }
@@ -116,13 +73,11 @@ function evaluarCondicionales() {
     if (q.dependeDe) {
       const padre = document.querySelector(`input[name="${q.dependeDe.preguntaId}"]:checked`);
       const bloqueHijo = document.getElementById(`block-${q.id}`);
-      
       if (padre && padre.value === q.dependeDe.valorRequerido) {
         bloqueHijo.classList.remove("hidden");
       } else {
         bloqueHijo.classList.add("hidden");
-        const seleccionados = bloqueHijo.querySelectorAll(`input[name="${q.id}"]`);
-        seleccionados.forEach(input => input.checked = false);
+        bloqueHijo.querySelectorAll(`input[name="${q.id}"]`).forEach(input => input.checked = false);
       }
     }
   });
@@ -135,8 +90,7 @@ window.guardarYEmparejar = async function() {
   const minEdad = parseInt(document.getElementById("min-age").value);
   const maxEdad = parseInt(document.getElementById("max-age").value);
 
-  if (!nombre) return alert("Por favor, introduce tu nombre.");
-  if (!pin || pin.length !== 4) return alert("Introduce un PIN de 4 dígitos.");
+  if (!nombre || !pin || pin.length !== 4) return alert("Nombre y PIN de 4 dígitos obligatorios.");
 
   const submitBtn = document.getElementById("submit-btn");
   submitBtn.innerText = "Verificando...";
@@ -149,59 +103,44 @@ window.guardarYEmparejar = async function() {
     const otrosUsuarios = [];
 
     if (snapshot.exists()) {
-      const data = snapshot.val();
-      Object.values(data).forEach(u => {
-        if (u.nombre.toLowerCase() === nombre.toLowerCase()) {
-          usuarioExistente = u;
-        } else {
-          otrosUsuarios.push(u);
-        }
+      Object.values(snapshot.val()).forEach(u => {
+        if (u.nombre.toLowerCase() === nombre.toLowerCase()) usuarioExistente = u;
+        else otrosUsuarios.push(u);
       });
     }
 
     if (usuarioExistente) {
-      if (usuarioExistente.pin !== pin) {
-        alert("Este nombre ya ha completado el test. El PIN introducido es incorrecto.");
-        return;
-      }
-
-      alert(`¡Hola de nuevo, ${usuarioExistente.nombre}! Ya habías completado el test. Te mostramos tus matches actualizados.`);
-      
+      if (usuarioExistente.pin !== pin) return alert("PIN incorrecto.");
+      usuarioActualGlobal = usuarioExistente.nombre;
       const resultados = calcularEmparejamientos(usuarioExistente, otrosUsuarios);
       mostrarResultados(resultados, usuarioExistente.nombre);
       return;
     }
 
-    if (isNaN(edad) || edad < 18) return alert("Introduce una edad válida.");
-    if (isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) return alert("Rango de edad inválido.");
+    if (isNaN(edad) || edad < 18 || isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) {
+      return alert("Revisa los rangos de edad.");
+    }
 
     const respuestas = {};
     for (const q of preguntas) {
       const bloque = document.getElementById(`block-${q.id}`);
       if (bloque && !bloque.classList.contains("hidden")) {
-        const seleccion = document.querySelector(`input[name="${q.id}"]:checked`);
-        if (!seleccion) return alert(`Por favor, responde: "${q.texto}"`);
-        respuestas[q.id] = seleccion.value;
+        const sel = document.querySelector(`input[name="${q.id}"]:checked`);
+        if (!sel) return alert(`Responde: "${q.texto}"`);
+        respuestas[q.id] = sel.value;
       }
     }
 
-    const nuevoUsuario = { 
-      nombre, 
-      pin,
-      edad, 
-      rangoBuscado: { min: minEdad, max: maxEdad }, 
-      respuestas, 
-      fecha: Date.now() 
-    };
-
+    const nuevoUsuario = { nombre, pin, edad, rangoBuscado: { min: minEdad, max: maxEdad }, respuestas, fecha: Date.now() };
     await push(ref(db, "usuarios"), nuevoUsuario);
+    usuarioActualGlobal = nombre;
 
     const resultados = calcularEmparejamientos(nuevoUsuario, otrosUsuarios);
     mostrarResultados(resultados, nuevoUsuario.nombre);
 
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Error al conectar con la base de datos.");
+  } catch (e) {
+    console.error(e);
+    alert("Error conectando con la base de datos.");
   } finally {
     submitBtn.innerText = "Guardar y Buscar Matches";
     submitBtn.disabled = false;
@@ -212,27 +151,20 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
   return listaUsuarios
     .filter(u => {
       if (!u.edad || !u.rangoBuscado) return false; 
-      const yoLeEncajo = usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max;
-      const elMeEncaja = u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
-      return yoLeEncajo && elMeEncaja;
+      return usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max &&
+             u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
     })
     .map(u => {
-      let aciertos = 0;
-      let desaciertos = 0;
-      let comparables = 0;
+      let aciertos = 0, desaciertos = 0, comparables = 0;
 
       preguntas.forEach(q => {
         const miRes = usuarioActual.respuestas[q.id];
         const suRes = u.respuestas ? u.respuestas[q.id] : null;
-
         if (miRes && suRes) {
           comparables++;
           const esMisma = (miRes === suRes);
-          if ((q.regla === "igual" && esMisma) || (q.regla === "opuesto" && !esMisma)) {
-            aciertos++;
-          } else {
-            desaciertos++;
-          }
+          if ((q.regla === "igual" && esMisma) || (q.regla === "opuesto" && !esMisma)) aciertos++;
+          else desaciertos++;
         }
       });
 
@@ -240,12 +172,8 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
       return { 
-        nombre: u.nombre, 
-        edad: u.edad,
-        porcentajeMatch, 
-        porcentajeGilicrush,
-        esMatch: porcentajeMatch >= 90,
-        esGilicrush: porcentajeGilicrush >= 90
+        nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
+        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
       };
     })
     .filter(r => r.esMatch || r.esGilicrush) 
@@ -259,7 +187,7 @@ function mostrarResultados(resultados, miNombre) {
   resultsSection.classList.remove("hidden");
 
   if (resultados.length === 0) {
-    matchesList.innerHTML = "<p>¡Perfil guardado! Aún no hay nadie que alcance el 90% de compatibilidad o incompatibilidad con tus respuestas.</p>";
+    matchesList.innerHTML = "<p>¡Perfil guardado! Aún no hay nadie con el 90% de afinidad/desafinidad.</p>";
     return;
   }
 
@@ -268,7 +196,6 @@ function mostrarResultados(resultados, miNombre) {
     const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
     const etiqueta = esGilicrush ? "⚡ ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
-
     const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
     return `
@@ -277,13 +204,10 @@ function mostrarResultados(resultados, miNombre) {
           <h3>${etiqueta}</h3>
           <p>Has conectado con <b>${r.nombre} (${r.edad} años)</b> - <b>${textoPorcentaje}</b></p>
         </div>
-        
         <div class="icebreaker-box">
-          <p class="icebreaker-question"><b>🎲 Pregunta Rompehielos para ${r.nombre}:</b></p>
+          <p class="icebreaker-question"><b>🎲 Rompehielos sugerido:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
-          <button id="btn-send-${index}">
-            🎲 Enviar pregunta a ${r.nombre} para romper el hielo
-          </button>
+          <button id="btn-send-${index}">💬 Iniciar Chat ilimitado con ${r.nombre}</button>
         </div>
       </div>
     `;
@@ -296,43 +220,12 @@ function mostrarResultados(resultados, miNombre) {
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => enviarPreguntaAC(r.nombre, miNombre, preguntaElegida, textoPorcentaje, index);
+      btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
     }
   });
 }
 
-window.enviarPreguntaAC = async function(destinoNombre, miNombre, pregunta, porcentajeText, index) {
-  const btnEl = document.getElementById(`btn-send-${index}`);
-  if (btnEl) {
-    btnEl.disabled = true;
-    btnEl.innerText = "Enviando...";
-  }
-
-  try {
-    await push(ref(db, `notificaciones/${destinoNombre.toLowerCase()}`), {
-      de: miNombre,
-      tipo: "Pregunta 🎲",
-      pregunta: pregunta,
-      porcentaje: porcentajeText,
-      respuestaReceptor: "",
-      respondido: false,
-      fecha: Date.now()
-    });
-
-    if (btnEl) {
-      btnEl.innerText = "✅ ¡Pregunta enviada a su buzón!";
-      btnEl.style.background = "#22c55e";
-    }
-  } catch (e) {
-    console.error(e);
-    alert("Error al enviar la pregunta.");
-    if (btnEl) {
-      btnEl.disabled = false;
-      btnEl.innerText = "Reintentar";
-    }
-  }
-};
-
+// 7. SISTEMA DE CHAT ILIMITADO Y BUZÓN
 window.accederBuzon = async function() {
   const nombre = document.getElementById("login-name").value.trim().toLowerCase();
   const pin = document.getElementById("login-pin").value.trim();
@@ -345,19 +238,16 @@ window.accederBuzon = async function() {
     let usuarioValido = false;
 
     if (snapshot.exists()) {
-      const data = snapshot.val();
-      Object.values(data).forEach(u => {
+      Object.values(snapshot.val()).forEach(u => {
         if (u.nombre.toLowerCase() === nombre && u.pin === pin) {
           usuarioValido = true;
+          usuarioActualGlobal = u.nombre;
         }
       });
     }
 
-    if (!usuarioValido) {
-      return alert("Nombre o PIN incorrectos.");
-    }
-
-    await cargarBuzon(nombre);
+    if (!usuarioValido) return alert("Nombre o PIN incorrectos.");
+    await cargarListaChats(usuarioActualGlobal);
 
   } catch (e) {
     console.error(e);
@@ -365,174 +255,144 @@ window.accederBuzon = async function() {
   }
 };
 
-async function cargarBuzon(nombreUsuario) {
-  const dbRef = ref(db);
-  const notifSnapshot = await get(child(dbRef, `notificaciones/${nombreUsuario}`));
-  
+async function cargarListaChats(miNombre) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
-  if (notifSnapshot.exists()) {
-    const notifsObj = notifSnapshot.val();
-    const notifKeys = Object.keys(notifsObj).reverse();
+  const dbRef = ref(db);
+  const chatsSnapshot = await get(child(dbRef, "chats"));
 
-    list.innerHTML = notifKeys.map(key => {
-      const n = notifsObj[key];
-      const porcentajeDisplay = n.porcentaje ? n.porcentaje : "";
-      const yaRespondido = Boolean(n.respondido);
-
-      // PASO 1: Pregunta recibida
-      if (n.tipo === "Pregunta 🎲") {
-        if (yaRespondido) {
-          return `
-            <div class="match-item">
-              <p><b>🎲 Pregunta de ${n.de} ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}:</b> <i>"${n.pregunta}"</i></p>
-              <p style="color: #22c55e;"><b>Tu respuesta enviada:</b> "${n.respuestaReceptor || ''}"</p>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="match-item gilicrush-item">
-              <p><b>🎲 ¡${n.de} te ha enviado una pregunta rompehielos! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
-              <p class="icebreaker-question"><i>"${n.pregunta}"</i></p>
-              <div class="reply-box">
-                <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta para ${n.de}..." />
-                <button id="btn-reply-${key}">Responder a ${n.de}</button>
-              </div>
-            </div>
-          `;
-        }
-      }
-
-      // PASO 2: Respuesta recibida (Con opción a réplica)
-      if (n.tipo === "Respuesta 💬") {
-        if (yaRespondido) {
-          return `
-            <div class="match-item">
-              <p><b>💬 ¡${n.de} respondió a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
-              <p class="question-text"><b>Su respuesta:</b> "${n.respuesta}"</p>
-              <p style="color: #22c55e;"><b>Tu réplica enviada:</b> "${n.respuestaFinal || ''}"</p>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="match-item gilicrush-item">
-              <p><b>💬 ¡${n.de} ha respondido a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
-              <p class="question-text"><b>Respuesta:</b> "${n.respuesta}"</p>
-              <div class="reply-box">
-                <input type="text" id="reply-input-${key}" placeholder="Escribe una última respuesta para ${n.de}..." />
-                <button id="btn-final-${key}">Enviar réplica a ${n.de}</button>
-              </div>
-            </div>
-          `;
-        }
-      }
-
-      // PASO 3: Réplica final recibida (Mensaje de cierre)
-      if (n.tipo === "Respuesta Final 💬") {
-        return `
-          <div class="match-item">
-            <p><b>💬 Réplica final de ${n.de} ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}:</b></p>
-            <p class="question-text">"${n.respuesta}"</p>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="match-item">
-          <p><b>${n.tipo}</b> con <b>${n.de}</b> ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</p>
-        </div>
-      `;
-    }).join('');
-
-    // Asignación limpia de eventos
-    notifKeys.forEach(key => {
-      const n = notifsObj[key];
-      const yaRespondido = Boolean(n.respondido);
-
-      if (!yaRespondido) {
-        if (n.tipo === "Pregunta 🎲") {
-          const btnReply = document.getElementById(`btn-reply-${key}`);
-          if (btnReply) {
-            btnReply.onclick = () => responderPregunta(nombreUsuario, key, n.de, n.porcentaje || "");
-          }
-        } else if (n.tipo === "Respuesta 💬") {
-          const btnFinal = document.getElementById(`btn-final-${key}`);
-          if (btnFinal) {
-            btnFinal.onclick = () => enviarRespuestaFinal(nombreUsuario, key, n.de, n.porcentaje || "");
-          }
-        }
-      }
-    });
-
-  } else {
-    list.innerHTML = "<p>Tu buzón está vacío por el momento.</p>";
+  if (!chatsSnapshot.exists()) {
+    list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
+    return;
   }
+
+  const chatsData = chatsSnapshot.val();
+  const misChats = [];
+
+  Object.keys(chatsData).forEach(chatId => {
+    const chat = chatsData[chatId];
+    if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
+      const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
+      misChats.push({ chatId, otroNombre, porcentaje: chat.porcentaje || "", ultimoMsg: chat.ultimoMensaje || "" });
+    }
+  });
+
+  if (misChats.length === 0) {
+    list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
+    return;
+  }
+
+  list.innerHTML = misChats.map((c, idx) => `
+    <div class="match-item" style="cursor: pointer;" id="chat-item-${idx}">
+      <p><b>💬 Chat con ${c.otroNombre}</b> <small>(${c.porcentaje})</small></p>
+      <p style="color: #666; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
+    </div>
+  `).join('');
+
+  misChats.forEach((c, idx) => {
+    const el = document.getElementById(`chat-item-${idx}`);
+    if (el) el.onclick = () => abrirSalaChat(miNombre, c.otroNombre, c.porcentaje);
+  });
 }
 
-window.responderPregunta = async function(miNombre, notifKey, nombreEmisor, porcentajeText) {
-  const inputEl = document.getElementById(`reply-input-${notifKey}`);
-  const respuestaText = inputEl ? inputEl.value.trim() : "";
+async function iniciarOCargarChat(miNombre, otroNombre, primerMensaje, porcentajeText) {
+  const chatId = obtenerChatId(miNombre, otroNombre);
+  const chatRef = ref(db, `chats/${chatId}`);
+  const snapshot = await get(chatRef);
 
-  if (!respuestaText) {
-    return alert("Escribe tu respuesta antes de enviarla.");
-  }
-
-  try {
-    const updates = {};
-    updates[`notificaciones/${miNombre}/${notifKey}/respuestaReceptor`] = respuestaText;
-    updates[`notificaciones/${miNombre}/${notifKey}/respondido`] = true;
-    await update(ref(db), updates);
-
-    await push(ref(db, `notificaciones/${nombreEmisor.toLowerCase()}`), {
-      de: miNombre,
-      tipo: "Respuesta 💬",
-      respuesta: respuestaText,
-      porcentaje: porcentajeText || "",
-      respondido: false, // Inicialización explícita para evitar fallos de evaluación
+  if (!snapshot.exists()) {
+    // Si no existe, creamos la sala y mandamos la primera pregunta
+    await update(chatRef, {
+      participantes: [miNombre, otroNombre],
+      porcentaje: porcentajeText,
+      ultimoMensaje: primerMensaje,
       fecha: Date.now()
     });
 
-    alert("¡Respuesta enviada con éxito!");
-    cargarBuzon(miNombre);
-  } catch (e) {
-    console.error(e);
-    alert("Error al responder la pregunta.");
-  }
-};
-
-window.enviarRespuestaFinal = async function(miNombre, notifKey, nombreEmisor, porcentajeText) {
-  const inputEl = document.getElementById(`reply-input-${notifKey}`);
-  const respuestaText = inputEl ? inputEl.value.trim() : "";
-
-  if (!respuestaText) {
-    return alert("Escribe tu respuesta antes de enviarla.");
-  }
-
-  try {
-    const updates = {};
-    updates[`notificaciones/${miNombre}/${notifKey}/respuestaFinal`] = respuestaText;
-    updates[`notificaciones/${miNombre}/${notifKey}/respondido`] = true;
-    await update(ref(db), updates);
-
-    await push(ref(db, `notificaciones/${nombreEmisor.toLowerCase()}`), {
+    await push(ref(db, `chats/${chatId}/mensajes`), {
       de: miNombre,
-      tipo: "Respuesta Final 💬",
-      respuesta: respuestaText,
-      porcentaje: porcentajeText || "",
-      respondido: true,
+      texto: primerMensaje,
       fecha: Date.now()
     });
-
-    alert("¡Réplica enviada con éxito!");
-    cargarBuzon(miNombre);
-  } catch (e) {
-    console.error(e);
-    alert("Error al enviar la réplica.");
   }
-};
+
+  abrirSalaChat(miNombre, otroNombre, porcentajeText);
+}
+
+function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
+  ocultarSecciones();
+  const mailbox = document.getElementById("mailbox-section");
+  const list = document.getElementById("notifications-list");
+  mailbox.classList.remove("hidden");
+
+  const chatId = obtenerChatId(miNombre, otroNombre);
+
+  // Render interfaz del chat
+  list.innerHTML = `
+    <div style="margin-bottom: 15px;">
+      <button onclick="cargarListaChats('${miNombre}')">⬅️ Volver a mis chats</button>
+      <h3 style="margin-top:10px;">💬 Chat con ${otroNombre} <small>(${porcentajeText})</small></h3>
+    </div>
+    <div id="chat-messages-box" style="max-height: 350px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fafafa; margin-bottom: 10px;">
+      <p>Cargando mensajes...</p>
+    </div>
+    <div class="reply-box" style="display: flex; gap: 8px;">
+      <input type="text" id="chat-input" placeholder="Escribe un mensaje..." style="flex: 1;" />
+      <button id="btn-send-msg">Enviar</button>
+    </div>
+  `;
+
+  // Limpiar escuchas pasadas
+  if (listenerChatActivo) off(listenerChatActivo);
+
+  // Escuchador EN TIEMPO REAL
+  const msgsRef = ref(db, `chats/${chatId}/mensajes`);
+  listenerChatActivo = msgsRef;
+
+  onValue(msgsRef, (snapshot) => {
+    const box = document.getElementById("chat-messages-box");
+    if (!box) return;
+
+    if (snapshot.exists()) {
+      const msgsObj = snapshot.val();
+      box.innerHTML = Object.values(msgsObj).map(m => {
+        const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
+        const alineacion = esMio ? "text-align: right;" : "text-align: left;";
+        const color = esMio ? "#dcf8c6" : "#ffffff";
+        return `
+          <div style="${alineacion} margin-bottom: 8px;">
+            <div style="display: inline-block; background: ${color}; padding: 8px 12px; border-radius: 12px; border: 1px solid #eee; max-width: 80%;">
+              <small style="color: #666; font-size: 0.75em;"><b>${m.de}</b></small><br/>
+              ${m.texto}
+            </div>
+          </div>
+        `;
+      }).join('');
+      box.scrollTop = box.scrollHeight; // Auto-scroll al final
+    } else {
+      box.innerHTML = "<p>No hay mensajes aún.</p>";
+    }
+  });
+
+  // Enviar nuevo mensaje
+  const btnSend = document.getElementById("btn-send-msg");
+  const inputEl = document.getElementById("chat-input");
+
+  const enviar = async () => {
+    const txt = inputEl.value.trim();
+    if (!txt) return;
+
+    inputEl.value = "";
+    await push(ref(db, `chats/${chatId}/mensajes`), { de: miNombre, texto: txt, fecha: Date.now() });
+    await update(ref(db, `chats/${chatId}`), { ultimoMensaje: txt, fecha: Date.now() });
+  };
+
+  btnSend.onclick = enviar;
+  inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
+}
 
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
@@ -540,6 +400,10 @@ window.mostrarSeccion = function(id) {
 };
 
 function ocultarSecciones() {
+  if (listenerChatActivo) {
+    off(listenerChatActivo);
+    listenerChatActivo = null;
+  }
   ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add("hidden");
