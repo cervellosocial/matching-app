@@ -13,14 +13,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
 const preguntas = [
-  { id: "q1", texto: "¿Prefieres playa o montaña?", opA: "Playa 🏖️", opB: "Montaña ⛰️" },
-  { id: "q2", texto: "¿Plan ideal de fin de semana?", opA: "Fiesta 🥳", opB: "Peli y manta 🍿" },
-  { id: "q3", texto: "¿Madrugar o trasnochar?", opA: "Madrugar 🌅", opB: "Trasnochar 🌙" },
-  { id: "q4", texto: "¿Gatos o perros?", opA: "Gatos 🐱", opB: "Perros 🐶" }
-  { id: "q5", texto: "¿Música alta o tranquila?", opA: "Alta", opB: "Tranquila", regla: "igual" }
-{ id: "q6", texto: "¿Hablar mucho o escuchar?", opA: "Hablar", opB: "Escuchar", regla: "opuesto" }
+  { id: "q1", texto: "¿Prefieres playa o montaña?", opA: "Playa 🏖️", opB: "Montaña ⛰️", regla: "igual" },
+  { id: "q2", texto: "¿Plan de cocina ideal?", opA: "Cocinar 👨‍🍳", opB: "Comer 🍽️", regla: "opuesto" },
+  { id: "q3", texto: "¿Madrugar o trasnochar?", opA: "Madrugar 🌅", opB: "Trasnochar 🌙", regla: "igual" },
+  { id: "q4", texto: "¿Liderar o dejarte llevar?", opA: "Liderar 🧭", opB: "Dejarme llevar 🎈", regla: "opuesto" }, // 👈 Ojo con la coma aquí
+  { id: "q5", texto: "Tu nueva pregunta aquí", opA: "Opción A", opB: "Opción B", regla: "igual" } // 👈 La última pregunta NO lleva coma al final
 ];
 
 function cargarPreguntas() {
