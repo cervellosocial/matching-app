@@ -159,7 +159,6 @@ window.guardarYEmparejar = async function() {
       });
     }
 
-    // BLOQUEO DE TEST REPETIDO: Si ya existe, validamos PIN y le enseñamos resultados directamente
     if (usuarioExistente) {
       if (usuarioExistente.pin !== pin) {
         alert("Este nombre ya ha completado el test. El PIN introducido es incorrecto.");
@@ -173,7 +172,6 @@ window.guardarYEmparejar = async function() {
       return;
     }
 
-    // VALIDACIONES PARA USUARIO NUEVO
     if (isNaN(edad) || edad < 18) return alert("Introduce una edad válida.");
     if (isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) return alert("Rango de edad inválido.");
 
@@ -196,7 +194,6 @@ window.guardarYEmparejar = async function() {
       fecha: Date.now() 
     };
 
-    // Registrar nuevo usuario por primera vez
     await push(ref(db, "usuarios"), nuevoUsuario);
 
     const resultados = calcularEmparejamientos(nuevoUsuario, otrosUsuarios);
@@ -247,8 +244,8 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
         edad: u.edad,
         porcentajeMatch, 
         porcentajeGilicrush,
-        esMatch: porcentajeMatch >= 90,        // Requiere mínimo 90%
-        esGilicrush: porcentajeGilicrush >= 90 // Requiere mínimo 90%
+        esMatch: porcentajeMatch >= 90,
+        esGilicrush: porcentajeGilicrush >= 90
       };
     })
     .filter(r => r.esMatch || r.esGilicrush) 
@@ -266,7 +263,6 @@ function mostrarResultados(resultados, miNombre) {
     return;
   }
 
-  // Plantillas de las tarjetas
   matchesList.innerHTML = resultados.map((r, index) => {
     const esGilicrush = r.esGilicrush;
     const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
@@ -293,7 +289,6 @@ function mostrarResultados(resultados, miNombre) {
     `;
   }).join('');
 
-  // Asignación segura de eventos para evitar fallos
   resultados.forEach((r, index) => {
     const esGilicrush = r.esGilicrush;
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
@@ -386,14 +381,15 @@ async function cargarBuzon(nombreUsuario) {
     list.innerHTML = notifKeys.map(key => {
       const n = notifsObj[key];
       const porcentajeDisplay = n.porcentaje ? n.porcentaje : "";
+      const yaRespondido = Boolean(n.respondido);
 
       // PASO 1: Pregunta recibida
       if (n.tipo === "Pregunta 🎲") {
-        if (n.respondido) {
+        if (yaRespondido) {
           return `
             <div class="match-item">
               <p><b>🎲 Pregunta de ${n.de} ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}:</b> <i>"${n.pregunta}"</i></p>
-              <p style="color: #22c55e;"><b>Tu respuesta enviada:</b> "${n.respuestaReceptor}"</p>
+              <p style="color: #22c55e;"><b>Tu respuesta enviada:</b> "${n.respuestaReceptor || ''}"</p>
             </div>
           `;
         } else {
@@ -410,14 +406,14 @@ async function cargarBuzon(nombreUsuario) {
         }
       }
 
-      // PASO 2: Respuesta recibida (Con opción de réplica)
+      // PASO 2: Respuesta recibida (Con opción a réplica)
       if (n.tipo === "Respuesta 💬") {
-        if (n.respondido) {
+        if (yaRespondido) {
           return `
             <div class="match-item">
               <p><b>💬 ¡${n.de} respondió a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
               <p class="question-text"><b>Su respuesta:</b> "${n.respuesta}"</p>
-              <p style="color: #22c55e;"><b>Tu réplica enviada:</b> "${n.respuestaFinal}"</p>
+              <p style="color: #22c55e;"><b>Tu réplica enviada:</b> "${n.respuestaFinal || ''}"</p>
             </div>
           `;
         } else {
@@ -434,7 +430,7 @@ async function cargarBuzon(nombreUsuario) {
         }
       }
 
-      // PASO 3: Réplica final recibida (Mensaje de cierre definitivo)
+      // PASO 3: Réplica final recibida (Mensaje de cierre)
       if (n.tipo === "Respuesta Final 💬") {
         return `
           <div class="match-item">
@@ -451,25 +447,28 @@ async function cargarBuzon(nombreUsuario) {
       `;
     }).join('');
 
-    // Asignar los eventos onclick a cada tipo de botón
+    // Asignación limpia de eventos
     notifKeys.forEach(key => {
       const n = notifsObj[key];
-      if (n.tipo === "Pregunta 🎲" && !n.respondido) {
-        const btnReply = document.getElementById(`btn-reply-${key}`);
-        if (btnReply) {
-          btnReply.onclick = () => responderPregunta(nombreUsuario, key, n.de, n.porcentaje || "");
-        }
-      }
-      if (n.tipo === "Respuesta 💬" && !n.respondido) {
-        const btnFinal = document.getElementById(`btn-final-${key}`);
-        if (btnFinal) {
-          btnFinal.onclick = () => enviarRespuestaFinal(nombreUsuario, key, n.de, n.porcentaje || "");
+      const yaRespondido = Boolean(n.respondido);
+
+      if (!yaRespondido) {
+        if (n.tipo === "Pregunta 🎲") {
+          const btnReply = document.getElementById(`btn-reply-${key}`);
+          if (btnReply) {
+            btnReply.onclick = () => responderPregunta(nombreUsuario, key, n.de, n.porcentaje || "");
+          }
+        } else if (n.tipo === "Respuesta 💬") {
+          const btnFinal = document.getElementById(`btn-final-${key}`);
+          if (btnFinal) {
+            btnFinal.onclick = () => enviarRespuestaFinal(nombreUsuario, key, n.de, n.porcentaje || "");
+          }
         }
       }
     });
 
   } else {
-    list.innerHTML = "<p>Tu buzón está vacío como el cerebro de algunos influencers.</p>";
+    list.innerHTML = "<p>Tu buzón está vacío por el momento.</p>";
   }
 }
 
@@ -492,6 +491,7 @@ window.responderPregunta = async function(miNombre, notifKey, nombreEmisor, porc
       tipo: "Respuesta 💬",
       respuesta: respuestaText,
       porcentaje: porcentajeText || "",
+      respondido: false, // Inicialización explícita para evitar fallos de evaluación
       fecha: Date.now()
     });
 
@@ -522,6 +522,7 @@ window.enviarRespuestaFinal = async function(miNombre, notifKey, nombreEmisor, p
       tipo: "Respuesta Final 💬",
       respuesta: respuestaText,
       porcentaje: porcentajeText || "",
+      respondido: true,
       fecha: Date.now()
     });
 
