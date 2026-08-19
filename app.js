@@ -32,7 +32,7 @@ const preguntasRompehielos = [
   "¿Cuál ha sido el último concierto/evento al que has ido? ¿O el próximo que tienes ganas de ir?",
 "¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
 "¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
-  "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?".
+  "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?",
 "¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
 "Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
   "¿Hay algo que la gente suele asumir de ti que no es cierto?",
