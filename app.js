@@ -225,7 +225,7 @@ function mostrarResultados(resultados, miNombre) {
   });
 }
 
-// 5. FUNCIONES GLOBALES DE CHAT Y BUZÓN EXPUESTAS A WINDOW
+// 5. FUNCIONES GLOBALES DE CHAT Y BUZÓN
 
 window.accederBuzon = async function() {
   const nombre = document.getElementById("login-name").value.trim().toLowerCase();
@@ -290,7 +290,7 @@ window.cargarListaChats = async function(miNombre) {
     list.innerHTML = misChats.map((c, idx) => `
       <div class="match-item" style="cursor: pointer;" id="chat-item-${idx}">
         <p><b>💬 Chat con ${c.otroNombre}</b> <small>(${c.porcentaje})</small></p>
-        <p style="color: #666; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
+        <p style="color: #ccc; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
       </div>
     `).join('');
 
@@ -341,20 +341,31 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   const chatId = obtenerChatId(miNombre, otroNombre);
 
   list.innerHTML = `
-    <div style="margin-bottom: 15px;">
-      <button onclick="window.cargarListaChats('${miNombre}')">⬅️ Volver a mis chats</button>
-      <h3 style="margin-top:10px;">💬 Chat con ${otroNombre} <small>(${porcentajeText})</small></h3>
+    <div style="margin-bottom: 15px; text-align: left;">
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer;">⬅️ Volver a mis chats</button>
+      <h3 style="margin-top:10px; color: #ffffff;">💬 Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
-    <div id="chat-messages-box" style="max-height: 350px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fafafa; margin-bottom: 10px;">
-      <p>Cargando mensajes...</p>
+    
+    <div id="chat-messages-box" style="height: 320px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
+      <p style="color: #374151;">Cargando mensajes...</p>
     </div>
-    <div class="reply-box" style="display: flex; gap: 8px;">
-      <input type="text" id="chat-input" placeholder="Escribe un mensaje..." style="flex: 1;" />
-      <button id="btn-send-msg">Enviar</button>
+    
+    <div style="display: flex !important; gap: 8px !important; align-items: center !important; width: 100% !important; box-sizing: border-box !important;">
+      <input 
+        type="text" 
+        id="chat-input" 
+        placeholder="Escribe un mensaje..." 
+        style="flex: 1 !important; width: 100% !important; height: 46px !important; padding: 0 12px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important;" 
+      />
+      <button 
+        id="btn-send-msg" 
+        style="height: 46px !important; padding: 0 20px !important; font-size: 15px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; white-space: nowrap !important;"
+      >
+        Enviar
+      </button>
     </div>
   `;
 
-  // Limpiar escuchadores previos
   if (refChatActiva && listenerChatActivo) {
     off(refChatActiva, "value", listenerChatActivo);
   }
@@ -371,19 +382,20 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       box.innerHTML = Object.values(msgsObj).map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
-        const color = esMio ? "#dcf8c6" : "#ffffff";
+        const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
+
         return `
-          <div style="${alineacion} margin-bottom: 8px;">
-            <div style="display: inline-block; background: ${color}; padding: 8px 12px; border-radius: 12px; border: 1px solid #eee; max-width: 80%;">
-              <small style="color: #666; font-size: 0.75em;"><b>${m.de}</b></small><br/>
-              ${m.texto}
+          <div style="${alineacion} margin-bottom: 10px;">
+            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              <small style="color: #000000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
+              <span style="font-size: 15px !important; line-height: 1.3 !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
       }).join('');
       box.scrollTop = box.scrollHeight;
     } else {
-      box.innerHTML = "<p>No hay mensajes aún.</p>";
+      box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
     }
   });
 
