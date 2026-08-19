@@ -1,18 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700&family=Metamorphous&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-dark: #070913;
-  --card-bg: rgba(15, 20, 36, 0.92);
-  --accent-mana: #00f0ff;
-  --accent-aether: #a855f7;
-  --accent-gold: #fbbf24;
-  --accent-blood: #dc2626;
-  --text-primary: #e0f2fe;
-  --text-secondary: #94a3b8;
-  --border-arcane: #1e293b;
-  --border-rune: #38bdf8;
-  --glow-mana: rgba(0, 240, 255, 0.4);
-  --glow-aether: rgba(168, 85, 247, 0.4);
+  --bg-dark: #0f0d0b;
+  --card-bg: rgba(28, 25, 23, 0.94);
+  --accent-brass: #d97706;
+  --accent-copper: #b45309;
+  --accent-gold: #f59e0b;
+  --accent-steam: #fef08a;
+  --accent-rust: #991b1b;
+  --text-primary: #fef3c7;
+  --text-secondary: #d6d3d1;
+  --border-brass: #78350f;
+  --border-rivet: #d97706;
+  --glow-brass: rgba(217, 119, 6, 0.35);
+  --glow-steam: rgba(254, 240, 138, 0.2);
 }
 
 body {
@@ -25,11 +26,11 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Fondo con degradado de energía etérea / tormenta de maná */
+  /* Fondo estilo taller mecánico victoriano / calderas de vapor */
   background-image: 
-    radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 70%),
-    radial-gradient(circle at 80% 100%, #311042 0%, transparent 60%),
-    radial-gradient(circle at 10% 50%, #0c4a6e 0%, transparent 50%);
+    radial-gradient(circle at 50% 0%, #451a03 0%, transparent 70%),
+    radial-gradient(circle at 80% 100%, #292524 0%, transparent 60%),
+    radial-gradient(circle at 10% 50%, #1c1917 0%, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -38,99 +39,100 @@ body {
   max-width: 560px;
 }
 
-/* Título con Estilo Alquímico / Hextech */
+/* Título estilo Placa de Latón Grabada */
 h1 {
   font-family: 'Cinzel Decorative', cursive;
   text-align: center;
-  font-size: 2.2rem;
-  color: var(--accent-mana);
+  font-size: 2.1rem;
+  color: var(--accent-brass);
   text-shadow: 
-    0 0 10px var(--accent-mana),
-    0 0 20px var(--accent-aether),
-    0 0 35px rgba(0, 240, 255, 0.3);
+    0 0 8px var(--accent-copper),
+    2px 2px 4px #000,
+    0 0 20px rgba(217, 119, 6, 0.3);
   margin-bottom: 25px;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-/* Tarjeta / Módulo Magitech */
+/* Tarjeta / Chasis Mecánico de Bronce */
 .card {
   background: var(--card-bg);
-  border: 1px solid var(--border-rune);
-  border-radius: 8px;
+  border: 2px solid var(--accent-brass);
+  border-radius: 6px;
   padding: 30px;
   box-shadow: 
-    0 0 25px rgba(0, 0, 0, 0.9),
-    inset 0 0 15px rgba(0, 240, 255, 0.08),
-    0 0 15px var(--glow-mana);
-  backdrop-filter: blur(10px);
+    0 0 30px rgba(0, 0, 0, 0.95),
+    inset 0 0 20px rgba(180, 83, 9, 0.2),
+    0 0 15px var(--glow-brass);
+  backdrop-filter: blur(8px);
   position: relative;
 }
 
-/* Marcos rúnicos en las esquinas */
+/* Esquinas de Engranajes / Remaches Victorianos */
 .card::before {
-  content: "◆";
+  content: "⚙";
   position: absolute;
   top: 6px;
   left: 8px;
-  color: var(--accent-gold);
-  font-size: 0.8rem;
-  text-shadow: 0 0 5px var(--accent-gold);
+  color: var(--accent-brass);
+  font-size: 0.9rem;
+  text-shadow: 0 0 5px var(--accent-copper);
 }
 
 .card::after {
-  content: "◆";
+  content: "⚙";
   position: absolute;
   top: 6px;
   right: 8px;
-  color: var(--accent-gold);
-  font-size: 0.8rem;
-  text-shadow: 0 0 5px var(--accent-gold);
+  color: var(--accent-brass);
+  font-size: 0.9rem;
+  text-shadow: 0 0 5px var(--accent-copper);
 }
 
 h2 {
-  font-family: 'Cinzel', serif;
+  font-family: 'Cinzel Decorative', cursive;
   color: var(--accent-gold);
-  border-bottom: 2px solid #1e293b;
+  border-bottom: 2px solid var(--border-brass);
   padding-bottom: 10px;
   margin-top: 0;
   letter-spacing: 1px;
-  font-size: 1.25rem;
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+  font-size: 1.15rem;
+  text-shadow: 1px 1px 2px #000;
 }
 
-/* Inputs de texto estilo Runas y Cristales */
+/* Inputs estilo Máquina de Escribir y Manómetros */
 input[type="text"], input[type="password"] {
   width: 100%;
   padding: 12px;
-  background-color: #0b1120;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  color: var(--accent-mana);
-  font-family: 'Share Tech Mono', monospace;
+  background-color: #0c0a09;
+  border: 1px solid var(--border-brass);
+  border-radius: 3px;
+  color: var(--accent-steam);
+  font-family: 'Courier Prime', monospace;
   font-size: 1rem;
   box-sizing: border-box;
   margin-bottom: 20px;
   transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 
 input[type="text"]:focus, input[type="password"]:focus {
   outline: none;
-  border-color: var(--accent-mana);
-  box-shadow: 0 0 12px var(--glow-mana);
-  background-color: #0f172a;
+  border-color: var(--accent-brass);
+  box-shadow: 0 0 10px var(--glow-brass), inset 0 2px 4px rgba(0,0,0,0.8);
+  background-color: #18110b;
 }
 
-/* Bloques de Preguntas / Grimorio */
+/* Bloques de Preguntas / Válvulas de Registro */
 .question-block {
-  background: rgba(15, 23, 42, 0.8);
-  border-left: 4px solid var(--accent-mana);
-  border-top: 1px solid rgba(56, 189, 248, 0.2);
-  border-right: 1px solid rgba(56, 189, 248, 0.1);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+  background: rgba(44, 36, 32, 0.7);
+  border-left: 4px solid var(--accent-brass);
+  border-top: 1px solid var(--border-brass);
+  border-right: 1px solid var(--border-brass);
+  border-bottom: 1px solid var(--border-brass);
   padding: 15px;
   margin-bottom: 15px;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 4px 4px 0;
   transition: all 0.3s ease;
 }
 
@@ -138,8 +140,8 @@ input[type="text"]:focus, input[type="password"]:focus {
   margin: 0 0 10px 0;
   font-family: 'Cinzel', serif;
   font-weight: 700;
-  font-size: 1rem;
-  color: #f0f9ff;
+  font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
 .options {
@@ -149,36 +151,38 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .options label {
   flex: 1;
-  background: #090d16;
+  background: #120e0c;
   padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #1e293b;
+  border-radius: 3px;
+  border: 1px solid var(--border-brass);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
+  color: var(--text-secondary);
 }
 
 .options label:hover {
-  border-color: var(--accent-mana);
-  background: #0f172a;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+  border-color: var(--accent-brass);
+  background: #271c16;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.3);
 }
 
 .options input[type="radio"] {
-  accent-color: var(--accent-mana);
+  accent-color: var(--accent-brass);
 }
 
-/* Botones Magitech / Botón de Canalización */
+/* Botones Mecánicos de Presión y Cobre */
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #0284c7 0%, #4338ca 100%);
-  color: #ffffff;
-  border: 1px solid var(--accent-mana);
-  border-radius: 4px;
+  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-gold);
+  border-radius: 3px;
   font-family: 'Cinzel', serif;
   font-weight: 700;
   font-size: 0.95rem;
@@ -186,59 +190,59 @@ button {
   text-transform: uppercase;
   cursor: pointer;
   margin-top: 15px;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(254, 240, 138, 0.3);
   transition: all 0.3s ease;
 }
 
 button:hover {
-  background: linear-gradient(135deg, #0369a1 0%, #3730a3 100%);
-  box-shadow: 0 0 20px var(--glow-mana), 0 0 10px var(--glow-aether);
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  box-shadow: 0 0 15px var(--glow-brass), inset 0 1px 0 rgba(254, 240, 138, 0.5);
   transform: translateY(-1px);
 }
 
 button:disabled {
-  background: #1e293b;
-  border-color: #334155;
-  color: #64748b;
+  background: #292524;
+  border-color: #44403c;
+  color: #78716c;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* Botones Secundarios */
 .secondary-btn {
-  background: linear-gradient(135deg, #581c87 0%, #831843 100%) !important;
-  border-color: var(--accent-aether) !important;
+  background: linear-gradient(135deg, #451a03 0%, #1c1917 100%) !important;
+  border-color: var(--accent-copper) !important;
 }
 
 .secondary-btn:hover {
-  box-shadow: 0 0 15px var(--glow-aether) !important;
+  box-shadow: 0 0 15px rgba(180, 83, 9, 0.4) !important;
 }
 
 .cancel-btn {
   background: transparent !important;
-  border: 1px solid #334155 !important;
+  border: 1px solid #44403c !important;
   color: var(--text-secondary) !important;
 }
 
 .cancel-btn:hover {
-  background: #0f172a !important;
+  background: #1c1917 !important;
   color: #fff !important;
 }
 
 /* Edades e Inputs Numéricos */
 .age-block {
   margin-bottom: 15px;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(44, 36, 32, 0.7);
   padding: 12px;
-  border-radius: 4px;
-  border: 1px solid #1e293b;
+  border-radius: 3px;
+  border: 1px solid var(--border-brass);
 }
 
 .age-block label {
   display: block;
   margin-bottom: 8px;
   font-family: 'Cinzel', serif;
-  color: #e0f2fe;
+  color: var(--text-primary);
 }
 
 .range-inputs {
@@ -249,103 +253,103 @@ button:disabled {
 
 .range-inputs span {
   color: var(--accent-gold);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Courier Prime', monospace;
 }
 
 input[type="number"] {
   width: 100%;
   padding: 10px;
-  background-color: #0b1120;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  color: var(--accent-mana);
-  font-family: 'Share Tech Mono', monospace;
+  background-color: #0c0a09;
+  border: 1px solid var(--border-brass);
+  border-radius: 3px;
+  color: var(--accent-steam);
+  font-family: 'Courier Prime', monospace;
   font-size: 0.95rem;
   box-sizing: border-box;
 }
 
 input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent-mana);
-  box-shadow: 0 0 10px var(--glow-mana);
+  border-color: var(--accent-brass);
+  box-shadow: 0 0 10px var(--glow-brass);
 }
 
-/* Lista de Resonancias / Matches */
+/* Lista de Afinidades Mecánicas / Matches */
 .match-item {
   display: flex;
   flex-direction: column;
   padding: 14px;
-  background: #0f172a;
-  border: 1px solid var(--accent-mana);
+  background: #1c1917;
+  border: 1px solid var(--accent-brass);
   margin-bottom: 12px;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.15);
 }
 
 .match-header h3 {
   margin: 0 0 5px 0;
-  color: var(--accent-mana);
+  color: var(--accent-gold);
   font-family: 'Cinzel Decorative', cursive;
   font-size: 0.95rem;
 }
 
 .match-item .percentage {
-  color: var(--accent-gold);
-  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent-brass);
+  font-family: 'Courier Prime', monospace;
   font-weight: bold;
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+  text-shadow: 0 0 8px rgba(217, 119, 6, 0.4);
 }
 
-/* Caja Rompehielos (Trasmisión de Cristal) */
+/* Caja Rompehielos (Telégrafo de Vapor) */
 .icebreaker-box {
-  background: #070a13;
-  border: 1px dashed var(--accent-aether);
-  border-radius: 4px;
+  background: #0c0a09;
+  border: 1px dashed var(--accent-copper);
+  border-radius: 3px;
   padding: 12px;
   margin-top: 10px;
 }
 
 .icebreaker-question {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin-bottom: 4px;
 }
 
 .question-text {
   font-size: 0.95rem;
-  color: #f8fafc;
-  font-family: 'Share Tech Mono', monospace;
+  color: var(--accent-steam);
+  font-family: 'Courier Prime', monospace;
   margin-bottom: 10px;
 }
 
 .reply-box input {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 4px;
-  border: 1px solid #334155;
-  background: #0b1120;
-  color: var(--accent-mana);
-  font-family: 'Share Tech Mono', monospace;
+  border-radius: 3px;
+  border: 1px solid var(--border-brass);
+  background: #1c1917;
+  color: var(--accent-steam);
+  font-family: 'Courier Prime', monospace;
   margin-bottom: 8px;
   box-sizing: border-box;
 }
 
 .reply-box button, .icebreaker-box button {
-  background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
   font-size: 0.85rem;
   padding: 8px 12px;
   margin: 0;
 }
 
-/* Estilos para el Gilicrush / Resonancia Caótica o Maldita */
+/* Estilos para Gilicrush / Fricción de Engranajes (Maldición / Incompatibilidad) */
 .match-item.gilicrush-item {
-  border: 1px solid var(--accent-blood);
-  background: linear-gradient(135deg, #180911 0%, #2a0a18 100%);
-  box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+  border: 1px solid var(--accent-rust);
+  background: linear-gradient(135deg, #1c0a0a 0%, #2e1010 100%);
+  box-shadow: 0 0 12px rgba(153, 27, 27, 0.4);
 }
 
 .match-item.gilicrush-item .match-header h3 {
-  color: #f87171;
+  color: #fca5a5;
 }
 
 .gilicrush-badge {
@@ -356,13 +360,13 @@ input[type="number"]:focus {
   padding: 2px 6px;
   border-radius: 2px;
   margin-left: 8px;
-  border: 1px solid #ef4444;
-  font-family: 'Share Tech Mono', monospace;
+  border: 1px solid #dc2626;
+  font-family: 'Courier Prime', monospace;
 }
 
 .percentage.gilicrush-text {
-  color: #f87171;
-  text-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+  color: #fca5a5;
+  text-shadow: 0 0 8px rgba(252, 165, 165, 0.5);
 }
 
 .hidden {
