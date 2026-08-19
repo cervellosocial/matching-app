@@ -1,91 +1,112 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Share+Tech+Mono&family=Exo+2:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700&family=Metamorphous&family=Share+Tech+Mono&display=swap');
 
 :root {
-  --bg-dark: #040806;
-  --card-bg: #0a110d;
-  --accent-toxic: #00ff66;
-  --accent-bio: #10b981;
-  --accent-mutant: #a855f7;
-  --accent-blood: #800000;
-  --text-primary: #d1fae5;
-  --text-secondary: #6ee7b7;
-  --border-bio: #054f31;
-  --glow-toxic: rgba(0, 255, 102, 0.4);
+  --bg-dark: #070913;
+  --card-bg: rgba(15, 20, 36, 0.92);
+  --accent-mana: #00f0ff;
+  --accent-aether: #a855f7;
+  --accent-gold: #fbbf24;
+  --accent-blood: #dc2626;
+  --text-primary: #e0f2fe;
+  --text-secondary: #94a3b8;
+  --border-arcane: #1e293b;
+  --border-rune: #38bdf8;
+  --glow-mana: rgba(0, 240, 255, 0.4);
+  --glow-aether: rgba(168, 85, 247, 0.4);
 }
 
 body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Cinzel', serif;
   margin: 0;
   padding: 20px;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Fondo estilo fluido orgánico / laboratorio mutante */
+  /* Fondo con degradado de energía etérea / tormenta de maná */
   background-image: 
-    radial-gradient(circle at 50% 0%, #064e3b 0%, transparent 65%),
-    radial-gradient(circle at 80% 100%, #31081f 0%, transparent 55%),
-    radial-gradient(circle at 10% 50%, #022c22 0%, transparent 45%);
+    radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 70%),
+    radial-gradient(circle at 80% 100%, #311042 0%, transparent 60%),
+    radial-gradient(circle at 10% 50%, #0c4a6e 0%, transparent 50%);
   background-attachment: fixed;
 }
 
 .container {
   width: 100%;
-  max-width: 550px;
+  max-width: 560px;
 }
 
-/* Título estilo Muestra Genética */
+/* Título con Estilo Alquímico / Hextech */
 h1 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Cinzel Decorative', cursive;
   text-align: center;
-  font-size: 2.3rem;
-  color: var(--accent-toxic);
-  text-shadow: 0 0 10px var(--accent-toxic), 0 0 25px rgba(0, 255, 102, 0.3), 0 0 40px var(--accent-blood);
+  font-size: 2.2rem;
+  color: var(--accent-mana);
+  text-shadow: 
+    0 0 10px var(--accent-mana),
+    0 0 20px var(--accent-aether),
+    0 0 35px rgba(0, 240, 255, 0.3);
   margin-bottom: 25px;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-/* Tarjeta / Placa de Petri / Modulo Biológico */
+/* Tarjeta / Módulo Magitech */
 .card {
-  background: rgba(10, 17, 13, 0.9);
-  border: 1px solid var(--accent-bio);
-  border-radius: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-rune);
+  border-radius: 8px;
   padding: 30px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(0, 255, 102, 0.05), 0 0 15px var(--glow-toxic);
-  backdrop-filter: blur(8px);
+  box-shadow: 
+    0 0 25px rgba(0, 0, 0, 0.9),
+    inset 0 0 15px rgba(0, 240, 255, 0.08),
+    0 0 15px var(--glow-mana);
+  backdrop-filter: blur(10px);
   position: relative;
-  overflow: hidden;
 }
 
+/* Marcos rúnicos en las esquinas */
 .card::before {
-  content: "";
+  content: "◆";
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-toxic), transparent);
+  top: 6px;
+  left: 8px;
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  text-shadow: 0 0 5px var(--accent-gold);
+}
+
+.card::after {
+  content: "◆";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  text-shadow: 0 0 5px var(--accent-gold);
 }
 
 h2 {
-  font-family: 'Orbitron', sans-serif;
-  color: #a7f3d0;
-  border-bottom: 1px solid var(--border-bio);
+  font-family: 'Cinzel', serif;
+  color: var(--accent-gold);
+  border-bottom: 2px solid #1e293b;
   padding-bottom: 10px;
   margin-top: 0;
   letter-spacing: 1px;
-  font-size: 1.2rem;
-  text-transform: uppercase;
+  font-size: 1.25rem;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
 }
 
-/* Campos de Texto e Inputs */
+/* Inputs de texto estilo Runas y Cristales */
 input[type="text"], input[type="password"] {
   width: 100%;
   padding: 12px;
-  background-color: #03140c;
-  border: 1px solid var(--border-bio);
-  border-radius: 2px;
-  color: var(--accent-toxic);
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  color: var(--accent-mana);
   font-family: 'Share Tech Mono', monospace;
   font-size: 1rem;
   box-sizing: border-box;
@@ -95,27 +116,30 @@ input[type="text"], input[type="password"] {
 
 input[type="text"]:focus, input[type="password"]:focus {
   outline: none;
-  border-color: var(--accent-toxic);
-  box-shadow: 0 0 12px var(--glow-toxic);
-  background-color: #052214;
+  border-color: var(--accent-mana);
+  box-shadow: 0 0 12px var(--glow-mana);
+  background-color: #0f172a;
 }
 
-/* Bloques de Preguntas / Ensayos Biológicos */
+/* Bloques de Preguntas / Grimorio */
 .question-block {
-  background: #06180f;
-  border-left: 4px solid var(--accent-toxic);
+  background: rgba(15, 23, 42, 0.8);
+  border-left: 4px solid var(--accent-mana);
+  border-top: 1px solid rgba(56, 189, 248, 0.2);
+  border-right: 1px solid rgba(56, 189, 248, 0.1);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
   padding: 15px;
   margin-bottom: 15px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   transition: all 0.3s ease;
 }
 
 .question-block p {
   margin: 0 0 10px 0;
-  font-family: 'Exo 2', sans-serif;
-  font-weight: 600;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
   font-size: 1rem;
-  color: #ecfdf5;
+  color: #f0f9ff;
 }
 
 .options {
@@ -125,10 +149,10 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .options label {
   flex: 1;
-  background: #020b07;
+  background: #090d16;
   padding: 10px;
-  border-radius: 3px;
-  border: 1px solid var(--border-bio);
+  border-radius: 4px;
+  border: 1px solid #1e293b;
   cursor: pointer;
   font-size: 0.9rem;
   display: flex;
@@ -138,85 +162,83 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .options label:hover {
-  border-color: var(--accent-toxic);
-  background: #062717;
-  color: #fff;
-  box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
+  border-color: var(--accent-mana);
+  background: #0f172a;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
 }
 
 .options input[type="radio"] {
-  accent-color: var(--accent-toxic);
+  accent-color: var(--accent-mana);
 }
 
-/* Botones Biopunk / Inyección Genética */
+/* Botones Magitech / Botón de Canalización */
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #4338ca 100%);
   color: #ffffff;
-  border: 1px solid var(--accent-toxic);
-  border-radius: 2px;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 800;
+  border: 1px solid var(--accent-mana);
+  border-radius: 4px;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
   font-size: 0.95rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
   margin-top: 15px;
-  box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
   transition: all 0.3s ease;
 }
 
 button:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 0 20px var(--glow-toxic);
-  color: #fff;
+  background: linear-gradient(135deg, #0369a1 0%, #3730a3 100%);
+  box-shadow: 0 0 20px var(--glow-mana), 0 0 10px var(--glow-aether);
   transform: translateY(-1px);
 }
 
 button:disabled {
-  background: #1f2937;
-  border-color: #374151;
-  color: #6b7280;
+  background: #1e293b;
+  border-color: #334155;
+  color: #64748b;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-/* Módulos Secundarios y Cancelación */
+/* Botones Secundarios */
 .secondary-btn {
-  background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%) !important;
-  border-color: var(--accent-mutant) !important;
+  background: linear-gradient(135deg, #581c87 0%, #831843 100%) !important;
+  border-color: var(--accent-aether) !important;
 }
 
 .secondary-btn:hover {
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.5) !important;
+  box-shadow: 0 0 15px var(--glow-aether) !important;
 }
 
 .cancel-btn {
   background: transparent !important;
-  border: 1px solid #374151 !important;
-  color: #9ca3af !important;
+  border: 1px solid #334155 !important;
+  color: var(--text-secondary) !important;
 }
 
 .cancel-btn:hover {
-  background: #111827 !important;
+  background: #0f172a !important;
   color: #fff !important;
 }
 
 /* Edades e Inputs Numéricos */
 .age-block {
   margin-bottom: 15px;
-  background: #06180f;
+  background: rgba(15, 23, 42, 0.8);
   padding: 12px;
   border-radius: 4px;
-  border: 1px solid var(--border-bio);
+  border: 1px solid #1e293b;
 }
 
 .age-block label {
   display: block;
   margin-bottom: 8px;
-  font-family: 'Exo 2', sans-serif;
-  color: #a7f3d0;
+  font-family: 'Cinzel', serif;
+  color: #e0f2fe;
 }
 
 .range-inputs {
@@ -226,17 +248,17 @@ button:disabled {
 }
 
 .range-inputs span {
-  color: var(--accent-bio);
+  color: var(--accent-gold);
   font-family: 'Share Tech Mono', monospace;
 }
 
 input[type="number"] {
   width: 100%;
   padding: 10px;
-  background-color: #03140c;
-  border: 1px solid var(--border-bio);
-  border-radius: 2px;
-  color: var(--accent-toxic);
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  color: var(--accent-mana);
   font-family: 'Share Tech Mono', monospace;
   font-size: 0.95rem;
   box-sizing: border-box;
@@ -244,40 +266,40 @@ input[type="number"] {
 
 input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent-toxic);
-  box-shadow: 0 0 10px var(--glow-toxic);
+  border-color: var(--accent-mana);
+  box-shadow: 0 0 10px var(--glow-mana);
 }
 
-/* Lista de Compatibilidades (Matches) */
+/* Lista de Resonancias / Matches */
 .match-item {
   display: flex;
   flex-direction: column;
   padding: 14px;
-  background: #06180f;
-  border: 1px solid var(--border-bio);
+  background: #0f172a;
+  border: 1px solid var(--accent-mana);
   margin-bottom: 12px;
   border-radius: 4px;
-  font-family: 'Exo 2', sans-serif;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
 }
 
 .match-header h3 {
   margin: 0 0 5px 0;
-  color: var(--accent-toxic);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
+  color: var(--accent-mana);
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 0.95rem;
 }
 
 .match-item .percentage {
-  color: var(--accent-toxic);
+  color: var(--accent-gold);
   font-family: 'Share Tech Mono', monospace;
   font-weight: bold;
-  text-shadow: 0 0 8px var(--glow-toxic);
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
 }
 
-/* Caja de Preguntas Rompehielos (Infección / Virus Rompehielos) */
+/* Caja Rompehielos (Trasmisión de Cristal) */
 .icebreaker-box {
-  background: rgba(3, 20, 12, 0.8);
-  border: 1px dashed var(--accent-bio);
+  background: #070a13;
+  border: 1px dashed var(--accent-aether);
   border-radius: 4px;
   padding: 12px;
   margin-top: 10px;
@@ -291,7 +313,7 @@ input[type="number"]:focus {
 
 .question-text {
   font-size: 0.95rem;
-  color: #ffffff;
+  color: #f8fafc;
   font-family: 'Share Tech Mono', monospace;
   margin-bottom: 10px;
 }
@@ -299,27 +321,27 @@ input[type="number"]:focus {
 .reply-box input {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 2px;
-  border: 1px solid var(--border-bio);
-  background: #020b07;
-  color: var(--accent-toxic);
+  border-radius: 4px;
+  border: 1px solid #334155;
+  background: #0b1120;
+  color: var(--accent-mana);
   font-family: 'Share Tech Mono', monospace;
   margin-bottom: 8px;
   box-sizing: border-box;
 }
 
 .reply-box button, .icebreaker-box button {
-  background: linear-gradient(135deg, #0f766e 0%, #047857 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
   font-size: 0.85rem;
   padding: 8px 12px;
   margin: 0;
 }
 
-/* Estilos especiales para Gilicrush / Mutación incompatible */
+/* Estilos para el Gilicrush / Resonancia Caótica o Maldita */
 .match-item.gilicrush-item {
-  border: 1px solid #dc2626;
-  background: linear-gradient(135deg, #18060a 0%, #2e0811 100%);
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
+  border: 1px solid var(--accent-blood);
+  background: linear-gradient(135deg, #180911 0%, #2a0a18 100%);
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
 }
 
 .match-item.gilicrush-item .match-header h3 {
