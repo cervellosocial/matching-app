@@ -1,18 +1,9 @@
-import { getAuth, signInAnonymously } from "firebase/auth";
-
-const auth = getAuth();
-signInAnonymously(auth)
-  .then(() => {
-    console.log("Sesión anónima iniciada con éxito");
-  })
-  .catch((error) => {
-    console.error("Error en autenticación anónima:", error);
-  });
-
-
+// 1. IMPORTACIONES DE FIREBASE (Todas vía CDN oficial)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+// 2. CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyC9T3b1oICEdwnXp2xEOpM9IKQU0GNah5U",
   authDomain: "matchmaker-app-ab055.firebaseapp.com",
@@ -23,10 +14,21 @@ const firebaseConfig = {
   measurementId: "G-95PP7Q5X6D"
 };
 
+// 3. INICIALIZACIÓN DE SERVICIOS
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-// Preguntas rompehielos programadas
+// Autenticación anónima para habilitar permisos de lectura/escritura seguros
+signInAnonymously(auth)
+  .then(() => {
+    console.log("Sesión anónima iniciada con éxito en Firebase");
+  })
+  .catch((error) => {
+    console.error("Error en autenticación anónima:", error);
+  });
+
+// 4. DATOS Y PREGUNTAS
 const preguntasRompehielos = [
   "¿Si pudieras viajar a cualquier sitio mañana, a dónde irías?",
   "¿Cuál es tu película o serie favorita de todos los tiempos?",
@@ -35,7 +37,6 @@ const preguntasRompehielos = [
   "¿Cuál es tu mayor placer culpable?"
 ];
 
-// Propiedad 'dependeDe': { preguntaId: "q5", valorRequerido: "A" }
 const preguntas = [
   { 
     id: "q1", 
@@ -72,8 +73,6 @@ const preguntas = [
     opB: "Sesiones puntuales 📅", 
     regla: "igual" 
   },
-  
-  // Pregunta detonante (Padre)
   { 
     id: "q6", 
     texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", 
@@ -81,8 +80,6 @@ const preguntas = [
     opB: "No 🚫", 
     regla: "igual" 
   },
-  
-  // Pregunta condicional (Hija): Solo aparece si en q6 se responde "A" (Sí)
   { 
     id: "q6_sub", 
     texto: "¿De derechas o de izquierdas?", 
@@ -92,6 +89,9 @@ const preguntas = [
     dependeDe: { preguntaId: "q6", valorRequerido: "A" } 
   }
 ];
+
+// 5. LÓGICA DE LA APLICACIÓN
+
 function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
@@ -279,7 +279,7 @@ window.enviarPreguntaAC = async function(destinoNombre, miNombre, pregunta, porc
       de: miNombre,
       tipo: "Pregunta 🎲",
       pregunta: pregunta,
-      porcentaje: porcentajeText, // Guardado para evitar 'undefined'
+      porcentaje: porcentajeText,
       respuestaReceptor: "",
       respondido: false,
       fecha: Date.now()
