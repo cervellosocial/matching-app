@@ -171,6 +171,48 @@ button:disabled {
   font-weight: bold;
   text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
 }
+.age-block {
+  margin-bottom: 15px;
+  background: #181824;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #2e1065;
+}
+
+.age-block label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: 'Cinzel', serif;
+  color: #e2e8f0;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-inputs span {
+  color: #94a3b8;
+  font-family: 'Cinzel', serif;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  background-color: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
 
 .hidden {
   display: none !important;
