@@ -16,24 +16,61 @@ const db = getDatabase(app);
 
 // Propiedad 'dependeDe': { preguntaId: "q5", valorRequerido: "A" }
 const preguntas = [
-  { id: "q1", texto: "¿Prefieres playa o montaña?", opA: "Playa 🏖️", opB: "Montaña ⛰️", regla: "igual" },
-  { id: "q2", texto: "¿Plan de cocina ideal?", opA: "Cocinar 👨‍🍳", opB: "Comer 🍽️", regla: "opuesto" },
-  { id: "q3", texto: "¿Madrugar o trasnochar?", opA: "Madrugar 🌅", opB: "Trasnochar 🌙", regla: "igual" },
+  { 
+    id: "q1", 
+    texto: "¿Prefieres obedecer o ser obedecido?", 
+    opA: "Obedecer 🙇", 
+    opB: "Ser obedecido 👑", 
+    regla: "opuesto" 
+  },
+  { 
+    id: "q2", 
+    texto: "¿Te gustan las inmovilizaciones?", 
+    opA: "Sí ⛓️", 
+    opB: "No 🚫", 
+    regla: "igual" 
+  },
+  { 
+    id: "q3", 
+    texto: "¿Restricciones sensoriales?", 
+    opA: "Sí 🙈", 
+    opB: "No 🚫", 
+    regla: "igual" 
+  },
+  { 
+    id: "q4", 
+    texto: "¿Te gusta la humillación suave?", 
+    opA: "Sí 😳", 
+    opB: "No 🚫", 
+    regla: "igual" 
+  },
+  { 
+    id: "q5", 
+    texto: "¿Prefieres 24/7 o sesiones puntuales?", 
+    opA: "24/7 ⏰", 
+    opB: "Sesiones puntuales 📅", 
+    regla: "igual" 
+  },
   
   // Pregunta detonante (Padre)
-  { id: "q4", texto: "¿Te gustan las mascotas?", opA: "Sí 🐶", opB: "No 🚫", regla: "igual" },
-  
-  // Pregunta condicional (Hija): Solo aparece si en q4 se responde "A" (Sí)
   { 
-    id: "q4_sub", 
-    texto: "¿Gatos o perros?", 
-    opA: "Gatos 🐱", 
-    opB: "Perros 🐶", 
+    id: "q6", 
+    texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", 
+    opA: "Sí 🗳️", 
+    opB: "No 🚫", 
+    regla: "igual" 
+  },
+  
+  // Pregunta condicional (Hija): Solo aparece si en q6 se responde "A" (Sí)
+  { 
+    id: "q6_sub", 
+    texto: "¿De derechas o de izquierdas?", 
+    opA: "Derechas ➡️", 
+    opB: "Izquierdas ⬅️", 
     regla: "igual", 
-    dependeDe: { preguntaId: "q4", valorRequerido: "A" } 
+    dependeDe: { preguntaId: "q6", valorRequerido: "A" } 
   }
 ];
-
 function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
