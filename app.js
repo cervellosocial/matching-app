@@ -1,3 +1,15 @@
+import { getAuth, signInAnonymously } from "firebase/auth";
+
+const auth = getAuth();
+signInAnonymously(auth)
+  .then(() => {
+    console.log("Sesión anónima iniciada con éxito");
+  })
+  .catch((error) => {
+    console.error("Error en autenticación anónima:", error);
+  });
+
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
