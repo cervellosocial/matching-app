@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MatchMaker - Emparejamiento por Respuestas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>MatchMaker 💘</h1>
+
+    <!-- Formulario de Registro y Cuestionario -->
+    <div id="quiz-section" class="card">
+      <h2>Completa tu Perfil</h2>
+      <input type="text" id="username" placeholder="Tu nombre" required>
+      
+      <div id="questions-container"></div>
+      
+      <button id="submit-btn" onclick="guardarYEmparejar()">Guardar y Buscar Matches</button>
+    </div>
+
+    <!-- Resultados de Emparejamiento -->
+    <div id="results-section" class="card hidden">
+      <h2>Tus Compatibilidades</h2>
+      <div id="matches-list"></div>
+      <button onclick="reiniciar()">Volver al cuestionario</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
