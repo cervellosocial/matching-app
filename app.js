@@ -75,7 +75,6 @@ function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
 
-  // Se eliminaron los atributos 'checked' para que naciendo desmarcadas por defecto
   container.innerHTML = preguntas.map(q => {
     const esCondicional = q.dependeDe ? "hidden" : "";
     return `
@@ -102,7 +101,6 @@ function evaluarCondicionales() {
         bloqueHijo.classList.remove("hidden");
       } else {
         bloqueHijo.classList.add("hidden");
-        // Desmarcar respuestas si la pregunta condicional se oculta
         const seleccionados = bloqueHijo.querySelectorAll(`input[name="${q.id}"]`);
         seleccionados.forEach(input => input.checked = false);
       }
@@ -116,14 +114,12 @@ window.guardarYEmparejar = async function() {
   const minEdad = parseInt(document.getElementById("min-age").value);
   const maxEdad = parseInt(document.getElementById("max-age").value);
 
-  // 1. Validaciones de datos principales
   if (!nombre) return alert("Por favor, introduce tu nombre.");
   if (isNaN(edad) || edad < 18) return alert("Por favor, introduce una edad válida (mínimo 18 años).");
   if (isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) {
     return alert("Por favor, selecciona un rango de edad válido.");
   }
 
-  // 2. Validación de preguntas del cuestionario
   const respuestas = {};
   for (const q of preguntas) {
     const bloque = document.getElementById(`block-${q.id}`);
@@ -162,21 +158,18 @@ window.guardarYEmparejar = async function() {
 
     await push(ref(db, "usuarios"), usuarioActual);
 
-    // 3. Comparación con FILTRO DE EDAD RECRÍPROCO
+    // LÓGICA DE MATCH + GILICRUSH
     const resultados = usuariosGuardados
       .filter(u => u.nombre.toLowerCase() !== nombre.toLowerCase())
       .filter(u => {
-        // Verificar si existe el dato de edad en usuarios antiguos
         if (!u.edad || !u.rangoBuscado) return false; 
-
-        // Cumple si MI edad está en SU rango Y SU edad está en MI rango
         const yoLeEncajo = usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max;
         const elMeEncaja = u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
-
         return yoLeEncajo && elMeEncaja;
       })
       .map(u => {
         let aciertos = 0;
+        let desaciertos = 0;
         let preguntasComparables = 0;
 
         preguntas.forEach(q => {
@@ -185,21 +178,35 @@ window.guardarYEmparejar = async function() {
 
           if (miRes && suRes) {
             preguntasComparables++;
-            if (q.regla === "igual" && miRes === suRes) {
+            const esMismaOpcion = (miRes === suRes);
+
+            if ((q.regla === "igual" && esMismaOpcion) || (q.regla === "opuesto" && !esMismaOpcion)) {
               aciertos++;
-            } else if (q.regla === "opuesto" && miRes !== suRes) {
-              aciertos++;
+            } else {
+              desaciertos++;
             }
           }
         });
 
-        const porcentaje = preguntasComparables > 0 
+        const porcentajeMatch = preguntasComparables > 0 
           ? Math.round((aciertos / preguntasComparables) * 100) 
           : 0;
 
-        return { nombre: `${u.nombre} (${u.edad} años)`, porcentaje };
+        const porcentajeGilicrush = preguntasComparables > 0 
+          ? Math.round((desaciertos / preguntasComparables) * 100) 
+          : 0;
+
+        // Se considera Gilicrush si la incompatibilidad es de 75% o más
+        const esGilicrush = porcentajeGilicrush >= 90;
+
+        return { 
+          nombre: `${u.nombre} (${u.edad} años)`, 
+          porcentajeMatch, 
+          porcentajeGilicrush,
+          esGilicrush
+        };
       })
-      .sort((a, b) => b.porcentaje - a.porcentaje);
+      .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
 
     mostrarResultados(resultados);
   } catch (error) {
@@ -222,12 +229,26 @@ function mostrarResultados(resultados) {
     return;
   }
 
-  matchesList.innerHTML = resultados.map(r => `
-    <div class="match-item">
-      <span>${r.nombre}</span>
-      <span class="percentage">${r.porcentaje}% de Match</span>
-    </div>
-  `).join('');
+  matchesList.innerHTML = resultados.map(r => {
+    if (r.esGilicrush) {
+      return `
+        <div class="match-item gilicrush-item">
+          <div>
+            <span><b>${r.nombre}</b></span>
+            <span class="gilicrush-badge">⚡ ¡TU GILICRUSH!</span>
+          </div>
+          <span class="percentage gilicrush-text">${r.porcentajeGilicrush}% Opuestos</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="match-item">
+        <span>${r.nombre}</span>
+        <span class="percentage">${r.porcentajeMatch}% de Match</span>
+      </div>
+    `;
+  }).join('');
 }
 
 window.reiniciar = function() {
@@ -236,3 +257,31 @@ window.reiniciar = function() {
 };
 
 window.onload = cargarPreguntas;
+
+Paso 2: Añadir estilos para "Gilicrush" en style.css
+
+Agrega este fragmento al final de tu archivo style.css para que las tarjetas de los Gilicrush resalten con bordes en tono rojo/sangre neón:
+CSS
+
+/* Estilos especiales para Gilicrush */
+.match-item.gilicrush-item {
+  border: 1px solid #991b1b;
+  background: linear-gradient(135deg, #181824 0%, #2a0808 100%);
+  box-shadow: 0 0 10px rgba(153, 27, 27, 0.4);
+}
+
+.gilicrush-badge {
+  display: inline-block;
+  background: #7f1d1d;
+  color: #fecaca;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  border: 1px solid #dc2626;
+}
+
+.percentage.gilicrush-text {
+  color: #f87171;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+}
