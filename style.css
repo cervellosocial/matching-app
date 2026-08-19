@@ -1,36 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap');
 
 :root {
-  --bg-dark: #0f0d0b;
-  --card-bg: rgba(28, 25, 23, 0.94);
-  --accent-brass: #d97706;
-  --accent-copper: #b45309;
-  --accent-gold: #f59e0b;
-  --accent-steam: #fef08a;
-  --accent-rust: #991b1b;
-  --text-primary: #fef3c7;
-  --text-secondary: #d6d3d1;
-  --border-brass: #78350f;
-  --border-rivet: #d97706;
-  --glow-brass: rgba(217, 119, 6, 0.35);
-  --glow-steam: rgba(254, 240, 138, 0.2);
+  --bg-dark: #05050a;
+  --card-bg: rgba(10, 10, 18, 0.94);
+  --accent-cyan: #00f0ff;
+  --accent-magenta: #ff0055;
+  --accent-yellow: #facc15;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-cyber: #00f0ff;
+  --border-magenta: #ff0055;
+  --glow-cyan: rgba(0, 240, 255, 0.5);
+  --glow-magenta: rgba(255, 0, 85, 0.5);
 }
 
 body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  font-family: 'Cinzel', serif;
+  font-family: 'Rajdhani', sans-serif;
   margin: 0;
   padding: 20px;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Fondo estilo taller mecánico victoriano / calderas de vapor */
+  /* Fondo estilo Red Neural / Megaciudad de Noche */
   background-image: 
-    radial-gradient(circle at 50% 0%, #451a03 0%, transparent 70%),
-    radial-gradient(circle at 80% 100%, #292524 0%, transparent 60%),
-    radial-gradient(circle at 10% 50%, #1c1917 0%, transparent 50%);
+    radial-gradient(circle at 50% 0%, #1e0038 0%, transparent 70%),
+    radial-gradient(circle at 80% 100%, #002b3d 0%, transparent 60%),
+    radial-gradient(circle at 10% 50%, #17001e 0%, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -39,109 +39,117 @@ body {
   max-width: 560px;
 }
 
-/* Título estilo Placa de Latón Grabada */
+/* Título estilo Neón Holográfico */
 h1 {
-  font-family: 'Cinzel Decorative', cursive;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
   text-align: center;
-  font-size: 2.1rem;
-  color: var(--accent-brass);
+  font-size: 2.3rem;
+  color: var(--accent-cyan);
   text-shadow: 
-    0 0 8px var(--accent-copper),
-    2px 2px 4px #000,
-    0 0 20px rgba(217, 119, 6, 0.3);
+    0 0 10px var(--accent-cyan),
+    0 0 20px var(--accent-magenta),
+    0 0 35px var(--accent-cyan);
   margin-bottom: 25px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
 }
 
-/* Tarjeta / Chasis Mecánico de Bronce */
+/* Tarjeta / Interfaz Neural Netrunner */
 .card {
   background: var(--card-bg);
-  border: 2px solid var(--accent-brass);
-  border-radius: 6px;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 2px;
   padding: 30px;
   box-shadow: 
-    0 0 30px rgba(0, 0, 0, 0.95),
-    inset 0 0 20px rgba(180, 83, 9, 0.2),
-    0 0 15px var(--glow-brass);
-  backdrop-filter: blur(8px);
+    0 0 25px rgba(0, 0, 0, 0.95),
+    inset 0 0 15px rgba(0, 240, 255, 0.1),
+    0 0 15px var(--glow-cyan);
+  backdrop-filter: blur(12px);
   position: relative;
+  /* Corte diagonal estilo Cyberpunk */
+  clip-path: polygon(
+    0 0, 
+    calc(100% - 15px) 0, 100% 15px, 
+    100% 100%, 
+    15px 100%, 0 calc(100% - 15px)
+  );
 }
 
-/* Esquinas de Engranajes / Remaches Victorianos */
+/* Marcadores de Estado Cibernético en esquinas */
 .card::before {
-  content: "⚙";
+  content: "SYS.ON //";
   position: absolute;
   top: 6px;
-  left: 8px;
-  color: var(--accent-brass);
-  font-size: 0.9rem;
-  text-shadow: 0 0 5px var(--accent-copper);
+  left: 10px;
+  color: var(--accent-yellow);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
 }
 
 .card::after {
-  content: "⚙";
+  content: "v2.026";
   position: absolute;
   top: 6px;
-  right: 8px;
-  color: var(--accent-brass);
-  font-size: 0.9rem;
-  text-shadow: 0 0 5px var(--accent-copper);
+  right: 15px;
+  color: var(--accent-magenta);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
 }
 
 h2 {
-  font-family: 'Cinzel Decorative', cursive;
-  color: var(--accent-gold);
-  border-bottom: 2px solid var(--border-brass);
-  padding-bottom: 10px;
-  margin-top: 0;
-  letter-spacing: 1px;
-  font-size: 1.15rem;
-  text-shadow: 1px 1px 2px #000;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--accent-yellow);
+  border-bottom: 2px solid var(--accent-magenta);
+  padding-bottom: 8px;
+  margin-top: 15px;
+  letter-spacing: 1.5px;
+  font-size: 1.2rem;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
 }
 
-/* Inputs estilo Máquina de Escribir y Manómetros */
+/* Inputs de Texto estilo Terminal Cyber/Console */
 input[type="text"], input[type="password"] {
   width: 100%;
   padding: 12px;
-  background-color: #0c0a09;
-  border: 1px solid var(--border-brass);
-  border-radius: 3px;
-  color: var(--accent-steam);
-  font-family: 'Courier Prime', monospace;
+  background-color: #030307;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 0px;
+  color: var(--accent-cyan);
+  font-family: 'Share Tech Mono', monospace;
   font-size: 1rem;
   box-sizing: border-box;
   margin-bottom: 20px;
   transition: all 0.3s ease;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 
 input[type="text"]:focus, input[type="password"]:focus {
   outline: none;
-  border-color: var(--accent-brass);
-  box-shadow: 0 0 10px var(--glow-brass), inset 0 2px 4px rgba(0,0,0,0.8);
-  background-color: #18110b;
+  border-color: var(--accent-magenta);
+  box-shadow: 0 0 15px var(--glow-magenta);
+  background-color: #090914;
 }
 
-/* Bloques de Preguntas / Válvulas de Registro */
+/* Bloques de Preguntas / Enlaces Neurales */
 .question-block {
-  background: rgba(44, 36, 32, 0.7);
-  border-left: 4px solid var(--accent-brass);
-  border-top: 1px solid var(--border-brass);
-  border-right: 1px solid var(--border-brass);
-  border-bottom: 1px solid var(--border-brass);
+  background: rgba(15, 15, 30, 0.8);
+  border-left: 4px solid var(--accent-magenta);
+  border-top: 1px solid rgba(0, 240, 255, 0.2);
+  border-right: 1px solid rgba(0, 240, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
   padding: 15px;
   margin-bottom: 15px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0px;
   transition: all 0.3s ease;
 }
 
 .question-block p {
   margin: 0 0 10px 0;
-  font-family: 'Cinzel', serif;
+  font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--text-primary);
+  font-size: 1.1rem;
+  color: #fff;
 }
 
 .options {
@@ -151,12 +159,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .options label {
   flex: 1;
-  background: #120e0c;
+  background: #05050d;
   padding: 10px;
-  border-radius: 3px;
-  border: 1px solid var(--border-brass);
+  border: 1px solid #1e1e38;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -165,83 +173,87 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .options label:hover {
-  border-color: var(--accent-brass);
-  background: #271c16;
-  color: #fff;
-  box-shadow: 0 0 8px rgba(217, 119, 6, 0.3);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: #0d0d24;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
 }
 
 .options input[type="radio"] {
-  accent-color: var(--accent-brass);
+  accent-color: var(--accent-magenta);
 }
 
-/* Botones Mecánicos de Presión y Cobre */
+/* Botones de Ejecución de Protocolos */
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
-  color: var(--text-primary);
-  border: 1px solid var(--accent-gold);
-  border-radius: 3px;
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
+  background: var(--accent-magenta);
+  color: #ffffff;
+  border: none;
+  border-radius: 0px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
   font-size: 0.95rem;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
   margin-top: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(254, 240, 138, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 0 15px var(--glow-magenta);
+  transition: all 0.2s ease;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
 button:hover {
-  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
-  box-shadow: 0 0 15px var(--glow-brass), inset 0 1px 0 rgba(254, 240, 138, 0.5);
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 0 25px var(--glow-cyan);
   transform: translateY(-1px);
 }
 
 button:disabled {
-  background: #292524;
-  border-color: #44403c;
-  color: #78716c;
+  background: #1e1e2e;
+  color: #4a4a6a;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* Botones Secundarios */
 .secondary-btn {
-  background: linear-gradient(135deg, #451a03 0%, #1c1917 100%) !important;
-  border-color: var(--accent-copper) !important;
+  background: transparent !important;
+  border: 1px solid var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
 }
 
 .secondary-btn:hover {
-  box-shadow: 0 0 15px rgba(180, 83, 9, 0.4) !important;
+  background: var(--accent-cyan) !important;
+  color: #000 !important;
+  box-shadow: 0 0 20px var(--glow-cyan) !important;
 }
 
 .cancel-btn {
   background: transparent !important;
-  border: 1px solid #44403c !important;
+  border: 1px solid #334155 !important;
   color: var(--text-secondary) !important;
 }
 
 .cancel-btn:hover {
-  background: #1c1917 !important;
+  background: #0f172a !important;
   color: #fff !important;
 }
 
 /* Edades e Inputs Numéricos */
 .age-block {
   margin-bottom: 15px;
-  background: rgba(44, 36, 32, 0.7);
+  background: rgba(15, 15, 30, 0.8);
   padding: 12px;
-  border-radius: 3px;
-  border: 1px solid var(--border-brass);
+  border: 1px solid #1e1e38;
 }
 
 .age-block label {
   display: block;
   margin-bottom: 8px;
-  font-family: 'Cinzel', serif;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -252,59 +264,57 @@ button:disabled {
 }
 
 .range-inputs span {
-  color: var(--accent-gold);
-  font-family: 'Courier Prime', monospace;
+  color: var(--accent-yellow);
+  font-family: 'Share Tech Mono', monospace;
 }
 
 input[type="number"] {
   width: 100%;
   padding: 10px;
-  background-color: #0c0a09;
-  border: 1px solid var(--border-brass);
-  border-radius: 3px;
-  color: var(--accent-steam);
-  font-family: 'Courier Prime', monospace;
-  font-size: 0.95rem;
+  background-color: #030307;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
   box-sizing: border-box;
 }
 
 input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent-brass);
-  box-shadow: 0 0 10px var(--glow-brass);
+  border-color: var(--accent-magenta);
+  box-shadow: 0 0 10px var(--glow-magenta);
 }
 
-/* Lista de Afinidades Mecánicas / Matches */
+/* Lista de Sintonías / Matches de Neón */
 .match-item {
   display: flex;
   flex-direction: column;
   padding: 14px;
-  background: #1c1917;
-  border: 1px solid var(--accent-brass);
+  background: #090914;
+  border: 1px solid var(--accent-cyan);
   margin-bottom: 12px;
-  border-radius: 3px;
-  box-shadow: 0 0 10px rgba(217, 119, 6, 0.15);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
 }
 
 .match-header h3 {
   margin: 0 0 5px 0;
-  color: var(--accent-gold);
-  font-family: 'Cinzel Decorative', cursive;
-  font-size: 0.95rem;
+  color: var(--accent-cyan);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
 }
 
 .match-item .percentage {
-  color: var(--accent-brass);
-  font-family: 'Courier Prime', monospace;
+  color: var(--accent-yellow);
+  font-family: 'Share Tech Mono', monospace;
   font-weight: bold;
-  text-shadow: 0 0 8px rgba(217, 119, 6, 0.4);
+  font-size: 1.1rem;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
 }
 
-/* Caja Rompehielos (Telégrafo de Vapor) */
+/* Caja Rompehielos (Transmisión Encriptada) */
 .icebreaker-box {
-  background: #0c0a09;
-  border: 1px dashed var(--accent-copper);
-  border-radius: 3px;
+  background: #030307;
+  border: 1px dashed var(--accent-magenta);
   padding: 12px;
   margin-top: 10px;
 }
@@ -317,39 +327,40 @@ input[type="number"]:focus {
 
 .question-text {
   font-size: 0.95rem;
-  color: var(--accent-steam);
-  font-family: 'Courier Prime', monospace;
+  color: var(--accent-cyan);
+  font-family: 'Share Tech Mono', monospace;
   margin-bottom: 10px;
 }
 
 .reply-box input {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 3px;
-  border: 1px solid var(--border-brass);
-  background: #1c1917;
-  color: var(--accent-steam);
-  font-family: 'Courier Prime', monospace;
+  border: 1px solid var(--accent-cyan);
+  background: #090914;
+  color: var(--accent-cyan);
+  font-family: 'Share Tech Mono', monospace;
   margin-bottom: 8px;
   box-sizing: border-box;
 }
 
 .reply-box button, .icebreaker-box button {
-  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+  background: var(--accent-cyan);
+  color: #000;
   font-size: 0.85rem;
   padding: 8px 12px;
   margin: 0;
+  box-shadow: 0 0 10px var(--glow-cyan);
 }
 
-/* Estilos para Gilicrush / Fricción de Engranajes (Maldición / Incompatibilidad) */
+/* Estilos para Gilicrush / Incompatibilidad / Anomalía Neural */
 .match-item.gilicrush-item {
-  border: 1px solid var(--accent-rust);
-  background: linear-gradient(135deg, #1c0a0a 0%, #2e1010 100%);
-  box-shadow: 0 0 12px rgba(153, 27, 27, 0.4);
+  border: 1px solid var(--accent-red);
+  background: linear-gradient(135deg, #180306 0%, #2a050b 100%);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
 
 .match-item.gilicrush-item .match-header h3 {
-  color: #fca5a5;
+  color: #f87171;
 }
 
 .gilicrush-badge {
@@ -358,15 +369,14 @@ input[type="number"]:focus {
   color: #fecaca;
   font-size: 0.75rem;
   padding: 2px 6px;
-  border-radius: 2px;
   margin-left: 8px;
-  border: 1px solid #dc2626;
-  font-family: 'Courier Prime', monospace;
+  border: 1px solid #ef4444;
+  font-family: 'Share Tech Mono', monospace;
 }
 
 .percentage.gilicrush-text {
-  color: #fca5a5;
-  text-shadow: 0 0 8px rgba(252, 165, 165, 0.5);
+  color: #f87171;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
 }
 
 .hidden {
