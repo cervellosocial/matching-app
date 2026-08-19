@@ -168,17 +168,45 @@ window.guardarYEmparejar = async function() {
     const dbRef = ref(db);
     const snapshot = await get(child(dbRef, "usuarios"));
     const usuariosGuardados = [];
-    
+    let usuarioKeyExistente = null;
+    let pinCorrecto = false;
+
     if (snapshot.exists()) {
       const data = snapshot.val();
-      Object.values(data).forEach(user => usuariosGuardados.push(user));
+      
+      // Buscar si el nombre ya existe en la base de datos
+      Object.keys(data).forEach(key => {
+        const u = data[key];
+        if (u.nombre.toLowerCase() === nombre.toLowerCase()) {
+          usuarioKeyExistente = key;
+          if (u.pin === pin) {
+            pinCorrecto = true;
+          }
+        } else {
+          // Solo añadimos a los OTROS usuarios para comparar
+          usuariosGuardados.push(u); 
+        }
+      });
     }
 
-    await push(ref(db, "usuarios"), usuarioActual);
+    // 1. Si el nombre existe pero el PIN es incorrecto, no permitimos guardar ni ver datos
+    if (usuarioKeyExistente && !pinCorrecto) {
+      alert("Este nombre ya está registrado. El PIN introducido es incorrecto.");
+      return;
+    }
 
-    // Calcular coincidencias
+    // 2. Si el nombre y PIN son correctos, actualizamos la ficha existente (sin duplicar registro)
+    if (usuarioKeyExistente && pinCorrecto) {
+      const updates = {};
+      updates[`usuarios/${usuarioKeyExistente}`] = usuarioActual;
+      await update(ref(db), updates);
+    } else {
+      // 3. Si es un usuario nuevo, creamos su registro por primera vez
+      await push(ref(db, "usuarios"), usuarioActual);
+    }
+
+    // Calcular coincidencias con la base de datos actualizada
     const resultados = usuariosGuardados
-      .filter(u => u.nombre.toLowerCase() !== nombre.toLowerCase())
       .filter(u => {
         if (!u.edad || !u.rangoBuscado) return false; 
         const yoLeEncajo = usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max;
@@ -213,12 +241,15 @@ window.guardarYEmparejar = async function() {
           edad: u.edad,
           porcentajeMatch, 
           porcentajeGilicrush,
+          esMatch: porcentajeMatch >= 90,
           esGilicrush: porcentajeGilicrush >= 90
         };
       })
+      .filter(r => r.esMatch || r.esGilicrush) 
       .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
 
     mostrarResultados(resultados, usuarioActual.nombre);
+
   } catch (error) {
     console.error("Error:", error);
     alert("Error al conectar con la base de datos.");
@@ -227,7 +258,6 @@ window.guardarYEmparejar = async function() {
     submitBtn.disabled = false;
   }
 };
-
 function mostrarResultados(resultados, miNombre) {
   ocultarSecciones();
   const resultsSection = document.getElementById("results-section");
