@@ -19,6 +19,8 @@ const preguntas = [
   { id: "q2", texto: "¿Plan ideal de fin de semana?", opA: "Fiesta 🥳", opB: "Peli y manta 🍿" },
   { id: "q3", texto: "¿Madrugar o trasnochar?", opA: "Madrugar 🌅", opB: "Trasnochar 🌙" },
   { id: "q4", texto: "¿Gatos o perros?", opA: "Gatos 🐱", opB: "Perros 🐶" }
+  { id: "q5", texto: "¿Música alta o tranquila?", opA: "Alta", opB: "Tranquila", regla: "igual" }
+{ id: "q6", texto: "¿Hablar mucho o escuchar?", opA: "Hablar", opB: "Escuchar", regla: "opuesto" }
 ];
 
 function cargarPreguntas() {
