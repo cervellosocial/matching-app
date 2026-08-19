@@ -19,7 +19,30 @@
       
       <button id="submit-btn" onclick="guardarYEmparejar()">Guardar y Buscar Matches</button>
     </div>
+<!-- Formulario de Registro y Cuestionario -->
+<div id="quiz-section" class="card">
+  <h2>Completa tu Perfil</h2>
+  <input type="text" id="username" placeholder="Tu nombre" required>
+  
+  <!-- Nuevos campos de edad -->
+  <div class="age-block">
+    <label for="user-age"><b>Tu edad:</b></label>
+    <input type="number" id="user-age" min="18" max="99" placeholder="Ej. 25" required>
+  </div>
 
+  <div class="age-block">
+    <label><b>Rango de edad que te interesa:</b></label>
+    <div class="range-inputs">
+      <input type="number" id="min-age" min="18" max="99" placeholder="Mín (ej. 20)">
+      <span>a</span>
+      <input type="number" id="max-age" min="18" max="99" placeholder="Máx (ej. 30)">
+    </div>
+  </div>
+  
+  <div id="questions-container"></div>
+  
+  <button id="submit-btn" onclick="guardarYEmparejar()">Guardar y Buscar Matches</button>
+</div>
     <!-- Resultados de Emparejamiento -->
     <div id="results-section" class="card hidden">
       <h2>Tus Compatibilidades</h2>
