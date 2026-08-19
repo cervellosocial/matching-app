@@ -75,21 +75,20 @@ function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
 
+  // Se eliminaron los atributos 'checked' para que naciendo desmarcadas por defecto
   container.innerHTML = preguntas.map(q => {
-    // Si la pregunta depende de otra, nace oculta con la clase 'hidden'
     const esCondicional = q.dependeDe ? "hidden" : "";
     return `
       <div class="question-block ${esCondicional}" id="block-${q.id}">
         <p><b>${q.texto}</b></p>
         <div class="options">
-          <label><input type="radio" name="${q.id}" value="A" ${!q.dependeDe ? 'checked' : ''}> ${q.opA}</label>
+          <label><input type="radio" name="${q.id}" value="A"> ${q.opA}</label>
           <label><input type="radio" name="${q.id}" value="B"> ${q.opB}</label>
         </div>
       </div>
     `;
   }).join('');
 
-  // Escuchar cambios para mostrar/ocultar preguntas condicionales
   container.addEventListener("change", evaluarCondicionales);
 }
 
@@ -101,12 +100,9 @@ function evaluarCondicionales() {
       
       if (padre && padre.value === q.dependeDe.valorRequerido) {
         bloqueHijo.classList.remove("hidden");
-        // Asegurar que haya una opción marcada al aparecer
-        const marcado = bloqueHijo.querySelector(`input[name="${q.id}"]:checked`);
-        if (!marcado) bloqueHijo.querySelector(`input[name="${q.id}"][value="A"]`).checked = true;
       } else {
         bloqueHijo.classList.add("hidden");
-        // Desmarcar respuestas si se oculta
+        // Desmarcar respuestas si la pregunta condicional se oculta
         const seleccionados = bloqueHijo.querySelectorAll(`input[name="${q.id}"]`);
         seleccionados.forEach(input => input.checked = false);
       }
@@ -116,20 +112,26 @@ function evaluarCondicionales() {
 
 window.guardarYEmparejar = async function() {
   const nombre = document.getElementById("username").value.trim();
-  if (!nombre) return alert("Por favor, introduce tu nombre");
+  if (!nombre) return alert("Por favor, introduce tu nombre.");
+
+  // VALIDACIÓN: Verificar que todas las preguntas visibles hayan sido respondidas
+  const respuestas = {};
+  for (const q of preguntas) {
+    const bloque = document.getElementById(`block-${q.id}`);
+    const estaVisible = !bloque.classList.contains("hidden");
+
+    if (estaVisible) {
+      const seleccion = document.querySelector(`input[name="${q.id}"]:checked`);
+      if (!seleccion) {
+        return alert(`Por favor, responde a la pregunta: "${q.texto}"`);
+      }
+      respuestas[q.id] = seleccion.value;
+    }
+  }
 
   const submitBtn = document.getElementById("submit-btn");
   submitBtn.innerText = "Guardando...";
   submitBtn.disabled = true;
-
-  // Guardar solo las respuestas visibles/contestadas
-  const respuestas = {};
-  preguntas.forEach(q => {
-    const seleccion = document.querySelector(`input[name="${q.id}"]:checked`);
-    if (seleccion) {
-      respuestas[q.id] = seleccion.value;
-    }
-  });
 
   const usuarioActual = { nombre, respuestas, fecha: Date.now() };
 
@@ -145,7 +147,7 @@ window.guardarYEmparejar = async function() {
 
     await push(ref(db, "usuarios"), usuarioActual);
 
-    // Lógica de compatibilidad dinámica
+    // Comparación de respuestas
     const resultados = usuariosGuardados
       .filter(u => u.nombre.toLowerCase() !== nombre.toLowerCase())
       .map(u => {
@@ -156,7 +158,6 @@ window.guardarYEmparejar = async function() {
           const miRes = usuarioActual.respuestas[q.id];
           const suRes = u.respuestas ? u.respuestas[q.id] : null;
 
-          // Solo se evalúa si AMBOS respondieron a esa pregunta en concreto
           if (miRes && suRes) {
             preguntasComparables++;
             if (q.regla === "igual" && miRes === suRes) {
