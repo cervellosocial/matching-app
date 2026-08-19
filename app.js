@@ -1,4 +1,4 @@
-// 1. IMPORTACIONES DE FIREBASE (Con soporte para escucha en tiempo real 'onValue')
+// 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -19,7 +19,8 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-let listenerChatActivo = null; // Para limpiar escuchas cuando cambiemos de pantalla
+let listenerChatActivo = null; 
+let refChatActiva = null;
 let usuarioActualGlobal = null;
 
 signInAnonymously(auth)
@@ -45,12 +46,11 @@ const preguntas = [
   { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } }
 ];
 
-// 5. HELPER CHAT ID (Genera identificador único entre dos usuarios alfabetizado)
+// Helper para ID de chat único
 function obtenerChatId(user1, user2) {
   return [user1.toLowerCase(), user2.toLowerCase()].sort().join("_");
 }
 
-// 6. LÓGICA GENERAL
 function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
@@ -207,7 +207,7 @@ function mostrarResultados(resultados, miNombre) {
         <div class="icebreaker-box">
           <p class="icebreaker-question"><b>🎲 Rompehielos sugerido:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
-          <button id="btn-send-${index}">💬 Iniciar Chat ilimitado con ${r.nombre}</button>
+          <button id="btn-send-${index}">💬 Iniciar Chat con ${r.nombre}</button>
         </div>
       </div>
     `;
@@ -220,12 +220,13 @@ function mostrarResultados(resultados, miNombre) {
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
+      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
     }
   });
 }
 
-// 7. SISTEMA DE CHAT ILIMITADO Y BUZÓN
+// 5. FUNCIONES GLOBALES DE CHAT Y BUZÓN EXPUESTAS A WINDOW
+
 window.accederBuzon = async function() {
   const nombre = document.getElementById("login-name").value.trim().toLowerCase();
   const pin = document.getElementById("login-pin").value.trim();
@@ -247,7 +248,7 @@ window.accederBuzon = async function() {
     }
 
     if (!usuarioValido) return alert("Nombre o PIN incorrectos.");
-    await cargarListaChats(usuarioActualGlobal);
+    await window.cargarListaChats(usuarioActualGlobal);
 
   } catch (e) {
     console.error(e);
@@ -255,74 +256,83 @@ window.accederBuzon = async function() {
   }
 };
 
-async function cargarListaChats(miNombre) {
+window.cargarListaChats = async function(miNombre) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
-  const dbRef = ref(db);
-  const chatsSnapshot = await get(child(dbRef, "chats"));
+  try {
+    const dbRef = ref(db);
+    const chatsSnapshot = await get(child(dbRef, "chats"));
 
-  if (!chatsSnapshot.exists()) {
-    list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
-    return;
-  }
-
-  const chatsData = chatsSnapshot.val();
-  const misChats = [];
-
-  Object.keys(chatsData).forEach(chatId => {
-    const chat = chatsData[chatId];
-    if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
-      const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
-      misChats.push({ chatId, otroNombre, porcentaje: chat.porcentaje || "", ultimoMsg: chat.ultimoMensaje || "" });
+    if (!chatsSnapshot.exists()) {
+      list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
+      return;
     }
-  });
 
-  if (misChats.length === 0) {
-    list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
-    return;
-  }
+    const chatsData = chatsSnapshot.val();
+    const misChats = [];
 
-  list.innerHTML = misChats.map((c, idx) => `
-    <div class="match-item" style="cursor: pointer;" id="chat-item-${idx}">
-      <p><b>💬 Chat con ${c.otroNombre}</b> <small>(${c.porcentaje})</small></p>
-      <p style="color: #666; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
-    </div>
-  `).join('');
-
-  misChats.forEach((c, idx) => {
-    const el = document.getElementById(`chat-item-${idx}`);
-    if (el) el.onclick = () => abrirSalaChat(miNombre, c.otroNombre, c.porcentaje);
-  });
-}
-
-async function iniciarOCargarChat(miNombre, otroNombre, primerMensaje, porcentajeText) {
-  const chatId = obtenerChatId(miNombre, otroNombre);
-  const chatRef = ref(db, `chats/${chatId}`);
-  const snapshot = await get(chatRef);
-
-  if (!snapshot.exists()) {
-    // Si no existe, creamos la sala y mandamos la primera pregunta
-    await update(chatRef, {
-      participantes: [miNombre, otroNombre],
-      porcentaje: porcentajeText,
-      ultimoMensaje: primerMensaje,
-      fecha: Date.now()
+    Object.keys(chatsData).forEach(chatId => {
+      const chat = chatsData[chatId];
+      if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
+        const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
+        misChats.push({ chatId, otroNombre, porcentaje: chat.porcentaje || "", ultimoMsg: chat.ultimoMensaje || "" });
+      }
     });
 
-    await push(ref(db, `chats/${chatId}/mensajes`), {
-      de: miNombre,
-      texto: primerMensaje,
-      fecha: Date.now()
+    if (misChats.length === 0) {
+      list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
+      return;
+    }
+
+    list.innerHTML = misChats.map((c, idx) => `
+      <div class="match-item" style="cursor: pointer;" id="chat-item-${idx}">
+        <p><b>💬 Chat con ${c.otroNombre}</b> <small>(${c.porcentaje})</small></p>
+        <p style="color: #666; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
+      </div>
+    `).join('');
+
+    misChats.forEach((c, idx) => {
+      const el = document.getElementById(`chat-item-${idx}`);
+      if (el) el.onclick = () => window.abrirSalaChat(miNombre, c.otroNombre, c.porcentaje);
     });
+  } catch (e) {
+    console.error("Error al cargar chats:", e);
+    list.innerHTML = "<p>Error al cargar la lista de chats.</p>";
   }
+};
 
-  abrirSalaChat(miNombre, otroNombre, porcentajeText);
-}
+window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText) {
+  try {
+    const chatId = obtenerChatId(miNombre, otroNombre);
+    const chatRef = ref(db, `chats/${chatId}`);
+    const snapshot = await get(chatRef);
 
-function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
+    if (!snapshot.exists()) {
+      await update(chatRef, {
+        participantes: [miNombre, otroNombre],
+        porcentaje: porcentajeText,
+        ultimoMensaje: primerMensaje,
+        fecha: Date.now()
+      });
+
+      await push(ref(db, `chats/${chatId}/mensajes`), {
+        de: miNombre,
+        texto: primerMensaje,
+        fecha: Date.now()
+      });
+    }
+
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
+  } catch (e) {
+    console.error("Error al crear/iniciar chat:", e);
+    alert("Ocurrió un error al abrir la sala de chat.");
+  }
+};
+
+window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -330,10 +340,9 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
 
   const chatId = obtenerChatId(miNombre, otroNombre);
 
-  // Render interfaz del chat
   list.innerHTML = `
     <div style="margin-bottom: 15px;">
-      <button onclick="cargarListaChats('${miNombre}')">⬅️ Volver a mis chats</button>
+      <button onclick="window.cargarListaChats('${miNombre}')">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px;">💬 Chat con ${otroNombre} <small>(${porcentajeText})</small></h3>
     </div>
     <div id="chat-messages-box" style="max-height: 350px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fafafa; margin-bottom: 10px;">
@@ -345,14 +354,15 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
     </div>
   `;
 
-  // Limpiar escuchas pasadas
-  if (listenerChatActivo) off(listenerChatActivo);
+  // Limpiar escuchadores previos
+  if (refChatActiva && listenerChatActivo) {
+    off(refChatActiva, "value", listenerChatActivo);
+  }
 
-  // Escuchador EN TIEMPO REAL
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
-  listenerChatActivo = msgsRef;
+  refChatActiva = msgsRef;
 
-  onValue(msgsRef, (snapshot) => {
+  listenerChatActivo = onValue(msgsRef, (snapshot) => {
     const box = document.getElementById("chat-messages-box");
     if (!box) return;
 
@@ -371,13 +381,12 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
           </div>
         `;
       }).join('');
-      box.scrollTop = box.scrollHeight; // Auto-scroll al final
+      box.scrollTop = box.scrollHeight;
     } else {
       box.innerHTML = "<p>No hay mensajes aún.</p>";
     }
   });
 
-  // Enviar nuevo mensaje
   const btnSend = document.getElementById("btn-send-msg");
   const inputEl = document.getElementById("chat-input");
 
@@ -386,13 +395,18 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText) {
     if (!txt) return;
 
     inputEl.value = "";
-    await push(ref(db, `chats/${chatId}/mensajes`), { de: miNombre, texto: txt, fecha: Date.now() });
-    await update(ref(db, `chats/${chatId}`), { ultimoMensaje: txt, fecha: Date.now() });
+    try {
+      await push(ref(db, `chats/${chatId}/mensajes`), { de: miNombre, texto: txt, fecha: Date.now() });
+      await update(ref(db, `chats/${chatId}`), { ultimoMensaje: txt, fecha: Date.now() });
+    } catch (e) {
+      console.error("Error al enviar mensaje:", e);
+      alert("No se pudo enviar el mensaje.");
+    }
   };
 
   btnSend.onclick = enviar;
   inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
-}
+};
 
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
@@ -400,9 +414,10 @@ window.mostrarSeccion = function(id) {
 };
 
 function ocultarSecciones() {
-  if (listenerChatActivo) {
-    off(listenerChatActivo);
+  if (refChatActiva && listenerChatActivo) {
+    off(refChatActiva, "value", listenerChatActivo);
     listenerChatActivo = null;
+    refChatActiva = null;
   }
   ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
     const el = document.getElementById(id);
