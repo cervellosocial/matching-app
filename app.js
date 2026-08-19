@@ -262,6 +262,10 @@ window.cargarListaChats = async function(miNombre) {
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
+  // Ocultar cualquier caja de envío antigua que esté fija en el HTML del buzón
+  const replyBoxEstatica = mailbox.querySelector(".reply-box");
+  if (replyBoxEstatica) replyBoxEstatica.style.display = "none";
+
   try {
     const dbRef = ref(db);
     const chatsSnapshot = await get(child(dbRef, "chats"));
@@ -338,30 +342,35 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
+  // Ocultar elementos estáticos del HTML que interfieren con la interfaz del chat
+  const replyBoxEstatica = mailbox.querySelector(".reply-box");
+  if (replyBoxEstatica) replyBoxEstatica.style.display = "none";
+
   const chatId = obtenerChatId(miNombre, otroNombre);
 
   list.innerHTML = `
-    <div style="margin-bottom: 15px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer;">⬅️ Volver a mis chats</button>
+    <div style="margin-bottom: 12px; text-align: left;">
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">💬 Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
     
-    <div id="chat-messages-box" style="height: 320px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
+    <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #374151;">Cargando mensajes...</p>
     </div>
     
-    <div style="display: flex !important; gap: 8px !important; align-items: center !important; width: 100% !important; box-sizing: border-box !important;">
+    <!-- Nueva barra de entrada de texto sustituta e independiente -->
+    <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
       <input 
         type="text" 
         id="chat-input" 
-        placeholder="Escribe un mensaje..." 
-        style="flex: 1 !important; width: 100% !important; height: 46px !important; padding: 0 12px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important;" 
+        placeholder="Escribe tu mensaje aquí..." 
+        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" 
       />
       <button 
         id="btn-send-msg" 
-        style="height: 46px !important; padding: 0 20px !important; font-size: 15px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; white-space: nowrap !important;"
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
       >
-        Enviar
+        Enviar mensaje
       </button>
     </div>
   `;
