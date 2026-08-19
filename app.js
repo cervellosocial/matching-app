@@ -29,11 +29,15 @@ signInAnonymously(auth)
 
 // 4. DATOS Y PREGUNTAS
 const preguntasRompehielos = [
-  "¿Si pudieras viajar a cualquier sitio mañana, a dónde irías?",
-  "¿Cuál es tu película o serie favorita de todos los tiempos?",
-  "¿Plan de fiesta hasta tarde o noche tranquila en casa?",
-  "¿Qué alimento o comida nunca probarías jamás?",
-  "¿Cuál es tu mayor placer culpable?"
+  "¿Cuál ha sido el último concierto/evento al que has ido? ¿O el próximo que tienes ganas de ir?",
+"¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
+"¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
+  "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?".
+"¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
+"Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
+  "¿Hay algo que la gente suele asumir de ti que no es cierto?",
+"¿Qué es lo último que te ha hecho reír en voz alta?",
+"¿Tienes alguna manía o ritual extraño que hagas sin pensar?"
 ];
 
 const preguntas = [
@@ -205,7 +209,7 @@ function mostrarResultados(resultados, miNombre) {
           <p>Has conectado con <b>${r.nombre} (${r.edad} años)</b> - <b>${textoPorcentaje}</b></p>
         </div>
         <div class="icebreaker-box">
-          <p class="icebreaker-question"><b>🎲 Rompehielos sugerido:</b></p>
+          <p class="icebreaker-question"><b>🎲 Pregunta sugerida:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
           <button id="btn-send-${index}">💬 Iniciar Chat con ${r.nombre}</button>
         </div>
