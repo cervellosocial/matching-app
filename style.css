@@ -1,77 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Metamorphous&family=Plus+Jakarta+Sans:wght@400;600&display=swap');
+
+:root {
+  --bg-dark: #0a0a0c;
+  --card-bg: #121118;
+  --accent-purple: #8b5cf6;
+  --accent-red: #991b1b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-glow: #3b0764;
+}
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 20px;
-  margin: 0;
+  align-items: center;
+  background-image: 
+    radial-gradient(circle at 50% 0%, #2e1065 0%, transparent 60%),
+    radial-gradient(circle at 80% 100%, #450a0a 0%, transparent 50%);
 }
 
 .container {
   width: 100%;
-  max-width: 500px;
+  max-width: 550px;
 }
 
-h1 { text-align: center; color: #38bdf8; }
+h1 {
+  font-family: 'Metamorphous', serif;
+  text-align: center;
+  font-size: 2.4rem;
+  color: #f8fafc;
+  text-shadow: 0 0 15px rgba(139, 92, 246, 0.6), 0 0 25px rgba(153, 27, 27, 0.4);
+  margin-bottom: 25px;
+  letter-spacing: 2px;
+}
 
 .card {
-  background: #1e293b;
-  padding: 24px;
+  background: var(--card-bg);
+  border: 1px solid #2e1065;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(88, 28, 135, 0.2);
+  backdrop-filter: blur(5px);
 }
 
+h2 {
+  font-family: 'Cinzel', serif;
+  color: #f1f5f9;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 10px;
+  margin-top: 0;
+  letter-spacing: 1px;
+}
+
+/* Input de nombre */
 input[type="text"] {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  border-radius: 6px;
+  padding: 12px;
+  background-color: #0f172a;
   border: 1px solid #475569;
-  background: #0f172a;
-  color: white;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
   box-sizing: border-box;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
 }
 
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Bloques de Preguntas */
 .question-block {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #334155;
+  background: #181824;
+  border-left: 3px solid var(--accent-purple);
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.3s ease;
+}
+
+.question-block p {
+  margin: 0 0 10px 0;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  color: #f3f4f6;
 }
 
 .options {
   display: flex;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 15px;
 }
 
+.options label {
+  flex: 1;
+  background: #0f0e17;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #2e1065;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.options label:hover {
+  border-color: var(--accent-purple);
+  background: #1e1b2e;
+}
+
+.options input[type="radio"] {
+  accent-color: var(--accent-purple);
+}
+
+/* Botones con estilo oscuro/gótico */
 button {
   width: 100%;
-  padding: 12px;
-  background: #0284c7;
-  color: white;
+  padding: 14px;
+  background: linear-gradient(135deg, #4c1d95 0%, #881337 100%);
+  color: #ffffff;
   border: none;
   border-radius: 6px;
-  font-weight: bold;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
 }
 
-button:hover { background: #0369a1; }
+button:hover {
+  background: linear-gradient(135deg, #5b21b6 0%, #9f1239 100%);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
+  transform: translateY(-1px);
+}
 
-.hidden { display: none; }
+button:disabled {
+  background: #334155;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
+/* Lista de Compatibilidades (Matches) */
 .match-item {
-  background: #0f172a;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 16px;
+  background: #181824;
+  border: 1px solid #2e1065;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
 }
 
-.percentage {
+.match-item .percentage {
+  color: #c084fc;
   font-weight: bold;
-  color: #4ade80;
+  text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+}
+
+.hidden {
+  display: none !important;
 }
