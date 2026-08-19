@@ -159,7 +159,7 @@ window.guardarYEmparejar = async function() {
       });
     }
 
-    // BLOQUEO DE TEST REPETIDO: Si ya existe, validamos PIN y le enseñamos resultados sin dejarle repetir respuestas
+    // BLOQUEO DE TEST REPETIDO: Si ya existe, validamos PIN y le enseñamos resultados directamente
     if (usuarioExistente) {
       if (usuarioExistente.pin !== pin) {
         alert("Este nombre ya ha completado el test. El PIN introducido es incorrecto.");
@@ -196,7 +196,7 @@ window.guardarYEmparejar = async function() {
       fecha: Date.now() 
     };
 
-    // Registrar nuevo usuario
+    // Registrar nuevo usuario por primera vez
     await push(ref(db, "usuarios"), nuevoUsuario);
 
     const resultados = calcularEmparejamientos(nuevoUsuario, otrosUsuarios);
@@ -273,7 +273,7 @@ function mostrarResultados(resultados, miNombre) {
     const etiqueta = esGilicrush ? "⚡ ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
 
-    const preguntaElegida = preguntasRompehielos[Math.floor(Math.round(Math.random() * (preguntasRompehielos.length - 1)))];
+    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
     return `
       <div class="${claseCard}">
@@ -283,7 +283,7 @@ function mostrarResultados(resultados, miNombre) {
         </div>
         
         <div class="icebreaker-box">
-          <p class="icebreaker-question"><b>🎲 Pregunta aleatoria para ${r.nombre}:</b></p>
+          <p class="icebreaker-question"><b>🎲 Pregunta Rompehielos para ${r.nombre}:</b></p>
           <p class="question-text"><i>"${preguntaElegida}"</i></p>
           <button id="btn-send-${index}">
             🎲 Enviar pregunta a ${r.nombre} para romper el hielo
@@ -293,7 +293,7 @@ function mostrarResultados(resultados, miNombre) {
     `;
   }).join('');
 
-  // Asignación segura de eventos para evitar fallos de clic
+  // Asignación segura de eventos para evitar fallos
   resultados.forEach((r, index) => {
     const esGilicrush = r.esGilicrush;
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
@@ -387,6 +387,7 @@ async function cargarBuzon(nombreUsuario) {
       const n = notifsObj[key];
       const porcentajeDisplay = n.porcentaje ? n.porcentaje : "";
 
+      // PASO 1: Pregunta recibida
       if (n.tipo === "Pregunta 🎲") {
         if (n.respondido) {
           return `
@@ -398,10 +399,10 @@ async function cargarBuzon(nombreUsuario) {
         } else {
           return `
             <div class="match-item gilicrush-item">
-              <p><b>🎲 ¡${n.de} te ha enviado una pregunta aleatoria! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
+              <p><b>🎲 ¡${n.de} te ha enviado una pregunta rompehielos! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
               <p class="icebreaker-question"><i>"${n.pregunta}"</i></p>
               <div class="reply-box">
-                <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta sin pensarlo demasiado ${n.de}..." />
+                <input type="text" id="reply-input-${key}" placeholder="Escribe tu respuesta para ${n.de}..." />
                 <button id="btn-reply-${key}">Responder a ${n.de}</button>
               </div>
             </div>
@@ -409,11 +410,36 @@ async function cargarBuzon(nombreUsuario) {
         }
       }
 
+      // PASO 2: Respuesta recibida (Con opción de réplica)
       if (n.tipo === "Respuesta 💬") {
+        if (n.respondido) {
+          return `
+            <div class="match-item">
+              <p><b>💬 ¡${n.de} respondió a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
+              <p class="question-text"><b>Su respuesta:</b> "${n.respuesta}"</p>
+              <p style="color: #22c55e;"><b>Tu réplica enviada:</b> "${n.respuestaFinal}"</p>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="match-item gilicrush-item">
+              <p><b>💬 ¡${n.de} ha respondido a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
+              <p class="question-text"><b>Respuesta:</b> "${n.respuesta}"</p>
+              <div class="reply-box">
+                <input type="text" id="reply-input-${key}" placeholder="Escribe una última respuesta para ${n.de}..." />
+                <button id="btn-final-${key}">Enviar réplica a ${n.de}</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // PASO 3: Réplica final recibida (Mensaje de cierre definitivo)
+      if (n.tipo === "Respuesta Final 💬") {
         return `
           <div class="match-item">
-            <p><b>💬 ¡${n.de} ha respondido a tu pregunta! ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}</b></p>
-            <p class="question-text"><b>Respuesta:</b> "${n.respuesta}"</p>
+            <p><b>💬 Réplica final de ${n.de} ${porcentajeDisplay ? `(${porcentajeDisplay})` : ''}:</b></p>
+            <p class="question-text">"${n.respuesta}"</p>
           </div>
         `;
       }
@@ -425,7 +451,7 @@ async function cargarBuzon(nombreUsuario) {
       `;
     }).join('');
 
-    // Asignar los eventos onclick de respuestas
+    // Asignar los eventos onclick a cada tipo de botón
     notifKeys.forEach(key => {
       const n = notifsObj[key];
       if (n.tipo === "Pregunta 🎲" && !n.respondido) {
@@ -434,10 +460,16 @@ async function cargarBuzon(nombreUsuario) {
           btnReply.onclick = () => responderPregunta(nombreUsuario, key, n.de, n.porcentaje || "");
         }
       }
+      if (n.tipo === "Respuesta 💬" && !n.respondido) {
+        const btnFinal = document.getElementById(`btn-final-${key}`);
+        if (btnFinal) {
+          btnFinal.onclick = () => enviarRespuestaFinal(nombreUsuario, key, n.de, n.porcentaje || "");
+        }
+      }
     });
 
   } else {
-    list.innerHTML = "<p>Tu buzón está tan vacío como el cerebro de algunos influencers.</p>";
+    list.innerHTML = "<p>Tu buzón está vacío como el cerebro de algunos influencers.</p>";
   }
 }
 
@@ -468,6 +500,36 @@ window.responderPregunta = async function(miNombre, notifKey, nombreEmisor, porc
   } catch (e) {
     console.error(e);
     alert("Error al responder la pregunta.");
+  }
+};
+
+window.enviarRespuestaFinal = async function(miNombre, notifKey, nombreEmisor, porcentajeText) {
+  const inputEl = document.getElementById(`reply-input-${notifKey}`);
+  const respuestaText = inputEl ? inputEl.value.trim() : "";
+
+  if (!respuestaText) {
+    return alert("Escribe tu respuesta antes de enviarla.");
+  }
+
+  try {
+    const updates = {};
+    updates[`notificaciones/${miNombre}/${notifKey}/respuestaFinal`] = respuestaText;
+    updates[`notificaciones/${miNombre}/${notifKey}/respondido`] = true;
+    await update(ref(db), updates);
+
+    await push(ref(db, `notificaciones/${nombreEmisor.toLowerCase()}`), {
+      de: miNombre,
+      tipo: "Respuesta Final 💬",
+      respuesta: respuestaText,
+      porcentaje: porcentajeText || "",
+      fecha: Date.now()
+    });
+
+    alert("¡Réplica enviada con éxito!");
+    cargarBuzon(miNombre);
+  } catch (e) {
+    console.error(e);
+    alert("Error al enviar la réplica.");
   }
 };
 
