@@ -14,7 +14,7 @@ const firebaseConfig = {
   measurementId: "G-95PP7Q5X6D"
 };
 
-// 3. INICIALIZACIÓN DE SERVICIOS
+// 3. INICIALIZACIÓN DE SERVICIOS Y VARIABLES GLOBALES
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -80,23 +80,7 @@ function evaluarCondicionales() {
   });
 }
 
-// Inicializar preguntas al cargar la página
-document.addEventListener("DOMContentLoaded", () => {
-  cargarPreguntas();
-});
-
-// 5. MÉTODOS EXPUESTOS A WINDOW PARA EVENTOS
-window.mostrarSeccion = function(id) {
-  ocultarSecciones();
-  const el = document.getElementById(id);
-  if (el) {
-    el.classList.remove("hidden");
-    if (id === "quiz-section") {
-      cargarPreguntas(); // Garantiza la renderización de las preguntas
-    }
-  }
-};
-
+// 5. NAVEGACIÓN Y CONTROL DE VISTAS
 function ocultarSecciones() {
   if (refChatActiva && listenerChatActivo) {
     off(refChatActiva, "value", listenerChatActivo);
@@ -114,14 +98,26 @@ function ocultarSecciones() {
   });
 }
 
-window.guardarYEmparejar = async function() {
+function mostrarSeccion(id) {
+  ocultarSecciones();
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove("hidden");
+    if (id === "quiz-section") {
+      cargarPreguntas();
+    }
+  }
+}
+
+// 6. PROCESO DE REGISTRO Y EMPAREJAMIENTO
+async function guardarYEmparejar() {
   const nombreInput = document.getElementById("username");
   const pinInput = document.getElementById("user-pin");
   const edadInput = document.getElementById("user-age");
   const minEdadInput = document.getElementById("min-age");
   const maxEdadInput = document.getElementById("max-age");
 
-  if (!nombreInput || !pinInput) return alert("Error interno: Faltan inputs del formulario en tu HTML.");
+  if (!nombreInput || !pinInput) return alert("Faltan campos de entrada en el formulario.");
 
   const nombre = nombreInput.value.trim();
   const pin = pinInput.value.trim();
@@ -161,7 +157,7 @@ window.guardarYEmparejar = async function() {
       usuarioActualGlobal = usuarioExistente.nombre;
       localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: usuarioExistente.nombre, pin }));
       
-      await window.cargarListaChats(usuarioExistente.nombre);
+      await cargarListaChats(usuarioExistente.nombre);
       return;
     }
 
@@ -189,14 +185,14 @@ window.guardarYEmparejar = async function() {
 
   } catch (e) {
     console.error("Error al guardar/emparejar:", e);
-    alert("Ocurrió un error al guardar en la base de datos: " + e.message);
+    alert("Ocurrió un error en la base de datos: " + e.message);
   } finally {
     if (submitBtn) {
       submitBtn.innerText = "Guardar y Buscar Matches";
       submitBtn.disabled = false;
     }
   }
-};
+}
 
 function calcularEmparejamientos(usuarioActual, listaUsuarios) {
   return listaUsuarios
@@ -241,7 +237,7 @@ function mostrarResultados(resultados, miNombre) {
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
 
   if (matchesFiltrados.length === 0) {
-    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! Aún no hay perfiles con el 90% de compatibilidad en tu rango. Puedes acceder desde el Buzón cuando haya nuevos perfiles.</p>";
+    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! Aún no hay perfiles con el 90% de compatibilidad. Puedes revisar el buzón más tarde.</p>";
     return;
   }
 
@@ -270,67 +266,22 @@ function mostrarResultados(resultados, miNombre) {
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, null);
+      btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, null);
     }
   });
 }
 
-window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText, tipoChatExistente) {
-  const chatId = obtenerChatId(miNombre, otroNombre);
-  try {
-    const chatRef = ref(db, `chats/${chatId}`);
-    const snapshot = await get(chatRef);
-    
-    let tipoChat = tipoChatExistente || "pregunta_aleatoria";
-    
-    if (!snapshot.exists()) {
-      const snapshotUsuarios = await get(child(ref(db), "usuarios"));
-      let miUsuario = null, otroUsuario = null;
-      
-      if (snapshotUsuarios.exists()) {
-        Object.values(snapshotUsuarios.val()).forEach(u => {
-          if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
-          if (u.nombre && u.nombre.toLowerCase() === otroNombre.toLowerCase()) otroUsuario = u;
-        });
-      }
-      
-      if (miUsuario && otroUsuario && miUsuario.respuestas && otroUsuario.respuestas) {
-        const miPref = miUsuario.respuestas["q_chat_pref"];
-        const suPref = otroUsuario.respuestas["q_chat_pref"];
-        
-        if (miPref === suPref && miPref === "B") {
-          tipoChat = "reglas_juego";
-        }
-      }
-      
-      await update(chatRef, {
-        participantes: [miNombre, otroNombre],
-        porcentaje: porcentajeText || "",
-        fecha: Date.now(),
-        tipoChat: tipoChat
-      });
-    } else {
-      const chatData = snapshot.val();
-      tipoChat = chatData.tipoChat || "pregunta_aleatoria";
-    }
-    
-    window.abrirSalaChat(miNombre, otroNombre, porcentajeText || "", tipoChat);
-  } catch (e) {
-    console.error("Error al iniciar/cargar chat:", e);
-    alert("Error al conectar con la sala de chat.");
-  }
-};
-
-window.accederBuzon = async function() {
+// 7. BUZÓN Y AUTENTICACIÓN
+async function accederBuzon() {
   const nombreInput = document.getElementById("login-name");
   const pinInput = document.getElementById("login-pin");
 
-  if (!nombreInput || !pinInput) return alert("Campos de inicio de sesión no encontrados.");
+  if (!nombreInput || !pinInput) return alert("Campos de acceso no encontrados.");
 
   const nombre = nombreInput.value.trim();
   const pin = pinInput.value.trim();
 
-  if (!nombre || !pin) return alert("Ingresa tu nombre y PIN de 4 dígitos.");
+  if (!nombre || !pin) return alert("Ingresa tu nombre y tu PIN.");
 
   try {
     const dbRef = ref(db);
@@ -348,15 +299,15 @@ window.accederBuzon = async function() {
     }
 
     if (!usuarioValido) return alert("Nombre o PIN incorrectos.");
-    await window.cargarListaChats(usuarioActualGlobal);
+    await cargarListaChats(usuarioActualGlobal);
 
   } catch (e) {
     console.error(e);
     alert("Error al acceder al buzón.");
   }
-};
+}
 
-window.cargarListaChats = async function(miNombre) {
+async function cargarListaChats(miNombre) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -430,7 +381,7 @@ window.cargarListaChats = async function(miNombre) {
       list.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
           <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
-          <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
+          <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
         </div>
         <p style='color: #ffffff;'>Aún no hay conexiones registradas.</p>
       `;
@@ -440,7 +391,7 @@ window.cargarListaChats = async function(miNombre) {
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
         <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
-        <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
+        <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
       </div>
     `;
 
@@ -482,7 +433,7 @@ window.cargarListaChats = async function(miNombre) {
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, tipoChat);
+        btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, tipoChat);
       }
     });
 
@@ -490,15 +441,62 @@ window.cargarListaChats = async function(miNombre) {
     console.error("Error al cargar buzón:", e);
     list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información del buzón.</p>";
   }
-};
+}
 
-window.cerrarSesion = function() {
+function cerrarSesion() {
   localStorage.removeItem("sesion_usuario");
   usuarioActualGlobal = null;
-  window.mostrarSeccion('mode-selector');
-};
+  mostrarSeccion('mode-selector');
+}
 
-window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) {
+// 8. MANEJO DEL CHAT
+async function iniciarOCargarChat(miNombre, otroNombre, mensajeInicial, porcentajeText, tipoChatExistente) {
+  const chatId = obtenerChatId(miNombre, otroNombre);
+  try {
+    const chatRef = ref(db, `chats/${chatId}`);
+    const snapshot = await get(chatRef);
+    
+    let tipoChat = tipoChatExistente || "pregunta_aleatoria";
+    
+    if (!snapshot.exists()) {
+      const snapshotUsuarios = await get(child(ref(db), "usuarios"));
+      let miUsuario = null, otroUsuario = null;
+      
+      if (snapshotUsuarios.exists()) {
+        Object.values(snapshotUsuarios.val()).forEach(u => {
+          if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
+          if (u.nombre && u.nombre.toLowerCase() === otroNombre.toLowerCase()) otroUsuario = u;
+        });
+      }
+      
+      if (miUsuario && otroUsuario && miUsuario.respuestas && otroUsuario.respuestas) {
+        const miPref = miUsuario.respuestas["q_chat_pref"];
+        const suPref = otroUsuario.respuestas["q_chat_pref"];
+        
+        if (miPref === suPref && miPref === "B") {
+          tipoChat = "reglas_juego";
+        }
+      }
+      
+      await update(chatRef, {
+        participantes: [miNombre, otroNombre],
+        porcentaje: porcentajeText || "",
+        fecha: Date.now(),
+        tipoChat: tipoChat
+      });
+    } else {
+      const chatData = snapshot.val();
+      tipoChat = chatData.tipoChat || "pregunta_aleatoria";
+    }
+    
+    abrirSalaChat(miNombre, otroNombre, porcentajeText || "", tipoChat);
+  } catch (e) {
+    console.error("Error al iniciar/cargar chat:", e);
+    alert("Error al conectar con la sala de chat.");
+  }
+}
+
+function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -512,12 +510,11 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
     contenidoEspecial = `
       <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
         <h4 style="color: #ffd700; margin-bottom: 8px;">📜 Reglas de Juego de Rol</h4>
-        <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 8px;">¡Bienvenidos a su aventura de rol! Aquí están las reglas:</p>
+        <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 8px;">¡Bienvenidos a su aventura de rol!</p>
         <ul style="color: #cbd5e1; font-size: 0.85em; padding-left: 20px; margin: 0;">
           <li>Respeten siempre los límites establecidos</li>
           <li>Usen ( ) para acciones y narración</li>
           <li>Usen " " para diálogos</li>
-          <li>Diviértanse creativamente</li>
         </ul>
       </div>
     `;
@@ -525,7 +522,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
 
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
+      <button onclick="cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
@@ -533,7 +530,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
 
     <div style="margin-bottom: 12px; text-align: center;">
       <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        ♟️ Abrir / Ocultar Juego de Damas. El perdedor obederá al ganador
+        ♟️ Abrir / Ocultar Juego de Damas
       </button>
       
       <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
@@ -541,7 +538,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
           <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin: 0; font-size: 14px;">Cargando tablero...</p>
           <div style="display: flex; gap: 5px;">
             <button id="btn-reiniciar-damas" style="background: #dc2626; color: white; border: none; padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;">🔄 Reiniciar</button>
-            <button id="btn-limpiar-damas" style="background: #b91c1c; color: white; border: none; padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;">🧹 Limpiar Datos</button>
           </div>
         </div>
         <div id="damas-grid" style="display: grid; grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); gap: 2px; justify-content: center;"></div>
@@ -553,16 +549,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
     </div>
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
-      <input 
-        type="text" 
-        id="chat-input" 
-        placeholder="Escribe tu mensaje aquí..." 
-        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important;" 
-      />
-      <button 
-        id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
-      >
+      <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000 !important; background-color: #fff !important; border: 2px solid #888 !important; border-radius: 6px !important;" />
+      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;">
         Enviar mensaje
       </button>
     </div>
@@ -579,27 +567,9 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
     
     if (btnReiniciar) {
       btnReiniciar.onclick = async () => {
-        if (confirm("¿Estás seguro de reiniciar el juego de damas? Se perderá el progreso actual y se forzará tablero 8x8.")) {
+        if (confirm("¿Estás seguro de reiniciar el juego de damas?")) {
           const nuevoTablero = obtenerTableroInicial(miNombre, otroNombre);
           await update(ref(db, `chats/${chatId}/damas`), nuevoTablero);
-        }
-      };
-    }
-    
-    const btnLimpiar = document.getElementById("btn-limpiar-damas");
-    if (btnLimpiar) {
-      btnLimpiar.onclick = async () => {
-        if (confirm("⚠️ ATENCIÓN: Esto eliminará TODOS los juegos de damas antiguos de Firebase y recreará este chat con tablero 8x8. ¿Continuar?")) {
-          try {
-            await update(ref(db, `chats/${chatId}/damas`), null);
-            setTimeout(async () => {
-              const nuevoTablero = obtenerTableroInicial(miNombre, otroNombre);
-              await update(ref(db, `chats/${chatId}/damas`), nuevoTablero);
-            }, 500);
-          } catch (e) {
-            console.error("Error al limpiar datos:", e);
-            alert("Error al limpiar datos: " + e.message);
-          }
         }
       };
     }
@@ -626,8 +596,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
         return `
           <div style="${alineacion} margin-bottom: 10px;">
             <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left;">
-              <small style="color: #000000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
-              <span style="font-size: 15px !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
+              <small style="color: #000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
+              <span style="font-size: 15px !important; color: #000 !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
@@ -659,11 +629,10 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
-};
+  inicializarJuegoDamas(chatId, miNombre, otroNombre);
+}
 
-// 6. JUEGO DE DAMAS (CON REGLAS, CAPTURA Y FIN DE JUEGO)
-
+// 9. LÓGICA DE JUEGO DE DAMAS
 function obtenerTableroInicial(jugador1, jugador2) {
   return {
     turno: jugador1,
@@ -683,7 +652,7 @@ function obtenerTableroInicial(jugador1, jugador2) {
   };
 }
 
-window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
+function inicializarJuegoDamas(chatId, miNombre, otroNombre) {
   if (refDamasActiva) {
     off(refDamasActiva);
     refDamasActiva = null;
@@ -697,13 +666,7 @@ window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
   listenerDamasActivo = onValue(damasRef, (snapshot) => {
     let estadoDamas = snapshot.val();
 
-    if (!estadoDamas) {
-      estadoDamas = obtenerTableroInicial(miNombre, otroNombre);
-      update(damasRef, estadoDamas);
-      return;
-    }
-
-    if (!estadoDamas.fichas || estadoDamas.fichas.length !== 8) {
+    if (!estadoDamas || !estadoDamas.fichas || estadoDamas.fichas.length !== 8) {
       estadoDamas = obtenerTableroInicial(miNombre, otroNombre);
       update(damasRef, estadoDamas);
       return;
@@ -711,7 +674,7 @@ window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
 
     renderizarTableroDamas(estadoDamas, chatId, miNombre);
   });
-};
+}
 
 function renderizarTableroDamas(estado, chatId, miNombre) {
   const grid = document.getElementById("damas-grid");
@@ -796,14 +759,12 @@ async function manejarClickCasillero(fila, col, estado, chatId, miNombre, miColo
 
   const casilleroContenido = estado.fichas[fila][col];
 
-  // 1. Selección de ficha propia
   if (casilleroContenido !== '' && casilleroContenido.charAt(0) === miColor) {
     fichaSeleccionada = { fila, col };
     renderizarTableroDamas(estado, chatId, miNombre);
     return;
   }
 
-  // 2. Movimiento si hay una ficha seleccionada
   if (fichaSeleccionada) {
     const origenFila = fichaSeleccionada.fila;
     const origenCol = fichaSeleccionada.col;
@@ -819,11 +780,9 @@ async function manejarClickCasillero(fila, col, estado, chatId, miNombre, miColo
       let filaCapturada = -1;
       let colCapturada = -1;
 
-      // Movimiento estándar a casilla adyacente
       if (deltaCol === 1 && (esReina ? Math.abs(deltaFila) === 1 : deltaFila === direccionPermitida)) {
         esMovimientoValido = true;
       } 
-      // Movimiento de captura
       else if (deltaCol === 2 && (esReina ? Math.abs(deltaFila) === 2 : deltaFila === 2 * direccionPermitida)) {
         filaCapturada = origenFila + deltaFila / 2;
         colCapturada = origenCol + (col - origenCol) / 2;
@@ -842,14 +801,12 @@ async function manejarClickCasillero(fila, col, estado, chatId, miNombre, miColo
           nuevasFichas[filaCapturada][colCapturada] = '';
         }
 
-        // Promoción a Reina
         let nuevaFichaVal = fichaActual;
         if ((miColor === 'B' && fila === 0) || (miColor === 'R' && fila === 7)) {
           nuevaFichaVal = miColor + 'K';
         }
         nuevasFichas[fila][col] = nuevaFichaVal;
 
-        // Comprobación de condición de victoria
         const rivalColor = miColor === 'B' ? 'R' : 'B';
         let leQuedanFichasRival = false;
 
@@ -874,3 +831,19 @@ async function manejarClickCasillero(fila, col, estado, chatId, miNombre, miColo
     }
   }
 }
+
+// 10. EXPONER FUNCIONES AL ÁMBITO GLOBAL (GLOBAL SCOPE / WINDOW)
+// Este paso es crucial cuando trabajas con type="module" y eventos HTML onClick.
+window.mostrarSeccion = mostrarSeccion;
+window.guardarYEmparejar = guardarYEmparejar;
+window.accederBuzon = accederBuzon;
+window.cargarListaChats = cargarListaChats;
+window.iniciarOCargarChat = iniciarOCargarChat;
+window.abrirSalaChat = abrirSalaChat;
+window.cerrarSesion = cerrarSesion;
+window.inicializarJuegoDamas = inicializarJuegoDamas;
+
+// Inicialización de la vista
+document.addEventListener("DOMContentLoaded", () => {
+  cargarPreguntas();
+});
