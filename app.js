@@ -109,8 +109,8 @@ function ocultarSecciones() {
     listenerChatActivo = null;
     refChatActiva = null;
   }
-  if (refDamasActiva && listenerDamasActivo) {
-    off(refDamasActiva, "value", listenerDamasActivo);
+  if (refDamasActivo && listenerDamasActivo) {
+    off(refDamasActivo, "value", listenerDamasActivo);
     listenerDamasActivo = null;
     refDamasActiva = null;
   }
@@ -532,14 +532,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
         </ul>
       </div>
     `;
-  } else {
-    contenidoEspecial = `
-      <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
-        <h4 style="color: #4ade80; margin-bottom: 8px;">🎲 Pregunta Aleatoria</h4>
-        <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 8px;">¡Rompe el hielo con esta pregunta!</p>
-        <p style="color: #fff; font-size: 1em; font-weight: bold; margin: 0;">${obtenerPreguntaAleatoria()}</p>
-      </div>
-    `;
   }
 
   list.innerHTML = `
@@ -636,7 +628,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
     }
   }, 50);
 
-  if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
+  if (refChatActiva && listenerChatActivo) off(refChatActivo, "value", listenerChatActivo);
 
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
@@ -863,6 +855,25 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   }
 }
 
+function hayCapturasDisponibles(estado, miNombre) {
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+  const colorFicha = soyBlanco ? 'B' : 'R';
+  const colorDama = 'D' + colorFicha;
+  
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const ficha = estado.fichas[r][c];
+      if (ficha === colorFicha || ficha === colorDama) {
+        const movimientos = calcularDestinosValidos(estado, { r, c }, miNombre);
+        if (movimientos.some(m => m.esCaptura)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 function calcularDestinosValidos(estado, desde, miNombre) {
   const destinos = [];
   const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
@@ -871,6 +882,10 @@ function calcularDestinosValidos(estado, desde, miNombre) {
   const esDama = ficha === 'DB' || ficha === 'DR';
 
   console.log(`Calculando movimientos para [${desde.r}, ${desde.c}], ficha: ${ficha}, esDama: ${esDama}`);
+
+  // Verificar si hay capturas obligatorias en el tablero
+  const debeCapturar = hayCapturasDisponibles(estado, miNombre);
+  console.log(`¿Debe capturar? ${debeCapturar}`);
 
   // Direcciones de movimiento
   let direcciones = [];
@@ -891,50 +906,78 @@ function calcularDestinosValidos(estado, desde, miNombre) {
 
   // Generar movimientos posibles
   direcciones.forEach(dir => {
-    // Movimiento normal (1 casilla)
-    const rNormal = desde.r + dir.r;
-    const cNormal = desde.c + dir.c;
-    
-    console.log(`Probando movimiento normal a [${rNormal}, ${cNormal}]`);
-    
-    if (rNormal >= 0 && rNormal < 8 && cNormal >= 0 && cNormal < 8) {
-      if (estado.fichas[rNormal][cNormal] === '') {
-        console.log(`Movimiento válido a [${rNormal}, ${cNormal}]`);
-        destinos.push({ r: rNormal, c: cNormal, esCaptura: false });
-      } else {
-        console.log(`Casilla ocupada en [${rNormal}, ${cNormal}]`);
+    if (esDama) {
+      // Damas: movimiento de largo alcance
+      for (let distancia = 1; distancia < 8; distancia++) {
+        const rDestino = desde.r + (dir.r * distancia);
+        const cDestino = desde.c + (dir.c * distancia);
+        
+        if (rDestino < 0 || rDestino >= 8 || cDestino < 0 || cDestino >= 8) break;
+        
+        const contenido = estado.fichas[rDestino][cDestino];
+        
+        if (contenido === '') {
+          // Casilla libre, movimiento normal (solo si no hay capturas obligatorias)
+          if (!debeCapturar) {
+            destinos.push({ r: rDestino, c: cDestino, esCaptura: false });
+          }
+        } else {
+          // Casilla ocupada, verificar si es enemigo para captura
+          const esEnemigo = contenido === colorEnemigo || 
+                           contenido === 'D' + colorEnemigo ||
+                           (colorEnemigo === 'B' && contenido === 'DB') ||
+                           (colorEnemigo === 'R' && contenido === 'DR');
+          
+          if (esEnemigo) {
+            // Verificar si hay espacio después del enemigo para capturar
+            const rDespues = rDestino + dir.r;
+            const cDespues = cDestino + dir.c;
+            
+            if (rDespues >= 0 && rDespues < 8 && cDespues >= 0 && cDespues < 8) {
+              if (estado.fichas[rDespues][cDespues] === '') {
+                destinos.push({ r: rDespues, c: cDespues, esCaptura: true, midR: rDestino, midC: cDestino });
+              }
+            }
+          }
+          break; // No podemos continuar en esta dirección
+        }
       }
     } else {
-      console.log(`Fuera de límites [${rNormal}, ${cNormal}]`);
-    }
-
-    // Movimiento de captura (2 casillas)
-    const rCaptura = desde.r + (dir.r * 2);
-    const cCaptura = desde.c + (dir.c * 2);
-    const rMedio = desde.r + dir.r;
-    const cMedio = desde.c + dir.c;
-
-    console.log(`Probando captura a [${rCaptura}, ${cCaptura}], medio [${rMedio}, ${cMedio}]`);
-
-    if (rCaptura >= 0 && rCaptura < 8 && cCaptura >= 0 && cCaptura < 8) {
-      if (estado.fichas[rCaptura][cCaptura] === '') {
-        const fichaMedio = estado.fichas[rMedio][cMedio];
-        console.log(`Ficha en medio: ${fichaMedio}, enemigo esperado: ${colorEnemigo}`);
+      // Fichas normales: movimiento de 1 casilla y captura de 2 casillas
+      // Movimiento normal (1 casilla) - solo si no hay capturas obligatorias
+      if (!debeCapturar) {
+        const rNormal = desde.r + dir.r;
+        const cNormal = desde.c + dir.c;
         
-        // Verificar si hay ficha enemiga (normal o dama) en el medio
-        const esEnemigo = fichaMedio === colorEnemigo || 
-                         fichaMedio === 'D' + colorEnemigo ||
-                         (colorEnemigo === 'B' && (fichaMedio === 'DB')) ||
-                         (colorEnemigo === 'R' && (fichaMedio === 'DR'));
-        if (esEnemigo) {
-          console.log(`Captura válida a [${rCaptura}, ${cCaptura}]`);
-          destinos.push({ r: rCaptura, c: cCaptura, esCaptura: true, midR: rMedio, midC: cMedio });
+        if (rNormal >= 0 && rNormal < 8 && cNormal >= 0 && cNormal < 8) {
+          if (estado.fichas[rNormal][cNormal] === '') {
+            destinos.push({ r: rNormal, c: cNormal, esCaptura: false });
+          }
+        }
+      }
+
+      // Movimiento de captura (2 casillas) - siempre permitido
+      const rCaptura = desde.r + (dir.r * 2);
+      const cCaptura = desde.c + (dir.c * 2);
+      const rMedio = desde.r + dir.r;
+      const cMedio = desde.c + dir.c;
+
+      if (rCaptura >= 0 && rCaptura < 8 && cCaptura >= 0 && cCaptura < 8) {
+        if (estado.fichas[rCaptura][cCaptura] === '') {
+          const fichaMedio = estado.fichas[rMedio][cMedio];
+          const esEnemigo = fichaMedio === colorEnemigo || 
+                           fichaMedio === 'D' + colorEnemigo ||
+                           (colorEnemigo === 'B' && fichaMedio === 'DB') ||
+                           (colorEnemigo === 'R' && fichaMedio === 'DR');
+          if (esEnemigo) {
+            destinos.push({ r: rCaptura, c: cCaptura, esCaptura: true, midR: rMedio, midC: cMedio });
+          }
         }
       }
     }
   });
 
-  console.log(`Destinos válidos: ${destinos.length}`);
+  console.log(`Destinos válidos: ${destinos.length}, capturas: ${destinos.filter(d => d.esCaptura).length}`);
   return destinos;
 }
 
@@ -949,13 +992,34 @@ async function ejecutarMovimiento(estado, desde, hasta, chatId, miNombre) {
   // Comprobar si fue un salto de captura para eliminar la ficha intermedia
   const diffR = Math.abs(hasta.r - desde.r);
   const diffC = Math.abs(hasta.c - desde.c);
-  const esCaptura = diffR === 2 && diffC === 2;
+  const esCaptura = diffR > 1 || diffC > 1; // Para damas puede ser más de 2
   
+  let posicionCaptura = null;
   if (esCaptura) {
-    const midR = (desde.r + hasta.r) / 2;
-    const midC = (desde.c + hasta.c) / 2;
-    console.log(`Captura eliminando ficha en [${midR}, ${midC}]`);
-    nuevasFichas[midR][midC] = ''; // Ficha comida destruida
+    // Para capturas de damas (largo alcance)
+    if (diffR > 2 || diffC > 2) {
+      // Calcular la posición de la ficha capturada
+      const dirR = hasta.r > desde.r ? 1 : -1;
+      const dirC = hasta.c > desde.c ? 1 : -1;
+      for (let d = 1; d < Math.max(diffR, diffC); d++) {
+        const rMedio = desde.r + (dirR * d);
+        const cMedio = desde.c + (dirC * d);
+        const fichaMedio = estado.fichas[rMedio][cMedio];
+        if (fichaMedio !== '') {
+          posicionCaptura = { r: rMedio, c: cMedio };
+          nuevasFichas[rMedio][cMedio] = '';
+          console.log(`Captura de dama eliminando ficha en [${rMedio}, ${cMedio}]`);
+          break;
+        }
+      }
+    } else {
+      // Captura normal de ficha simple (2 casillas)
+      const midR = (desde.r + hasta.r) / 2;
+      const midC = (desde.c + hasta.c) / 2;
+      posicionCaptura = { r: midR, c: midC };
+      nuevasFichas[midR][midC] = '';
+      console.log(`Captura eliminando ficha en [${midR}, ${midC}]`);
+    }
   }
 
   // Coronación: Si una ficha blanca llega a la fila 0 o roja a la fila 7
@@ -965,6 +1029,30 @@ async function ejecutarMovimiento(estado, desde, hasta, chatId, miNombre) {
   } else if (colorFicha === 'R' && hasta.r === 7) {
     nuevasFichas[hasta.r][hasta.c] = 'DR'; // Corona roja
     console.log("¡Ficha roja coronada!");
+  }
+
+  // Verificar si hay más capturas disponibles desde la nueva posición
+  const nuevoEstado = { ...estado, fichas: nuevasFichas };
+  const colorFichaCoronada = nuevasFichas[hasta.r][hasta.c];
+  const esDama = colorFichaCoronada === 'DB' || colorFichaCoronada === 'DR';
+  
+  let puedeSeguirCapturando = false;
+  if (esCaptura && !esDama) { // Solo fichas normales deben seguir capturando, las damas coronadas terminan turno
+    const movimientosDesdeNuevaPos = calcularDestinosValidos(nuevoEstado, { r: hasta.r, c: hasta.c }, miNombre);
+    puedeSeguirCapturando = movimientosDesdeNuevaPos.some(m => m.esCaptura);
+  }
+  
+  if (puedeSeguirCapturando) {
+    console.log("¡Captura múltiple! Mismo jugador debe seguir capturando");
+    fichaSeleccionada = { r: hasta.r, c: hasta.c }; // Mantener seleccionada para siguiente captura
+    
+    await update(ref(db, `chats/${chatId}/damas`), {
+      ...estado,
+      turno: miNombre, // Mismo jugador sigue
+      ganador: '',
+      fichas: nuevasFichas
+    });
+    return; // No cambiamos el turno
   }
 
   // Recuento de fichas para verificar fin de juego
@@ -1038,5 +1126,5 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnEntrarBuzon) btnEntrarBuzon.onclick = () => window.accederBuzon();
 
   const btnVolver = document.getElementById("btn-volver-selector");
-  if (btnVolver) btnBtnVolver.onclick = () => window.mostrarSeccion("mode-selector");
+  if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
 });
