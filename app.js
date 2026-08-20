@@ -266,49 +266,110 @@ window.cargarListaChats = async function(miNombre) {
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
-  // Ocultar cualquier caja de envío antigua que esté fija en el HTML del buzón
+  // Ocultar elementos estáticos del HTML que interfieren con la interfaz
   const replyBoxEstatica = mailbox.querySelector(".reply-box");
   if (replyBoxEstatica) replyBoxEstatica.style.display = "none";
 
+  list.innerHTML = "<p style='color: #ffffff;'>Cargando tu buzón y compatibilidades...</p>";
+
   try {
     const dbRef = ref(db);
-    const chatsSnapshot = await get(child(dbRef, "chats"));
+    
+    // 1. Obtener todos los usuarios para calcular Matches / Gilicrushes
+    const snapshotUsuarios = await get(child(dbRef, "usuarios"));
+    let miUsuario = null;
+    const otrosUsuarios = [];
 
-    if (!chatsSnapshot.exists()) {
-      list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
+    if (snapshotUsuarios.exists()) {
+      Object.values(snapshotUsuarios.val()).forEach(u => {
+        if (u.nombre.toLowerCase() === miNombre.toLowerCase()) {
+          miUsuario = u;
+        } else {
+          otrosUsuarios.push(u);
+        }
+      });
+    }
+
+    if (!miUsuario) {
+      list.innerHTML = "<p style='color: #ffffff;'>No se encontraron los datos de tu perfil.</p>";
       return;
     }
 
-    const chatsData = chatsSnapshot.val();
-    const misChats = [];
+    // Calcular las afinidades y desafinidades con el resto de usuarios
+    const resultadosAfinidad = calcularEmparejamientos(miUsuario, otrosUsuarios);
 
-    Object.keys(chatsData).forEach(chatId => {
-      const chat = chatsData[chatId];
-      if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
-        const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
-        misChats.push({ chatId, otroNombre, porcentaje: chat.porcentaje || "", ultimoMsg: chat.ultimoMensaje || "" });
+    // 2. Obtener chats ya iniciados desde Firebase
+    const snapshotChats = await get(child(dbRef, "chats"));
+    const chatsExistentes = {};
+
+    if (snapshotChats.exists()) {
+      const chatsData = snapshotChats.val();
+      Object.keys(chatsData).forEach(chatId => {
+        const chat = chatsData[chatId];
+        if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
+          const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
+          chatsExistentes[otroNombre.toLowerCase()] = {
+            chatId,
+            ultimoMsg: chat.ultimoMensaje || ""
+          };
+        }
+      });
+    }
+
+    // 3. Generar la vista combinada
+    if (resultadosAfinidad.length === 0) {
+      list.innerHTML = "<p style='color: #ffffff;'>Aún no tienes compatibilidades (Matches o Gilicrushes) registradas.</p>";
+      return;
+    }
+
+    let htmlOutput = `<h3 style="color: #ffffff; text-align: left; margin-bottom: 15px;">📫 Tu Buzón de Conexiones</h3>`;
+
+    resultadosAfinidad.forEach((r, index) => {
+      const esGilicrush = r.esGilicrush;
+      const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
+      const etiqueta = esGilicrush ? "⚡ GILICRUSH" : "💘 MATCH";
+      const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
+      
+      const chatIniciado = chatsExistentes[r.nombre.toLowerCase()];
+      const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
+
+      htmlOutput += `
+        <div class="${claseCard}" style="margin-bottom: 15px; text-align: left;">
+          <div class="match-header">
+            <h4>${etiqueta}: ${r.nombre} (${r.edad} años)</h4>
+            <p><b>Afinidad:</b> ${textoPorcentaje}</p>
+          </div>
+          ${chatIniciado ? `
+            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p>
+            <button id="btn-buzon-chat-${index}" style="background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+              💬 Continuar Conversación
+            </button>
+          ` : `
+            <p style="color: #bbb; font-size: 0.85em; margin: 8px 0;"><i>Aún no habéis hablado. ¡Inicia la conversación!</i></p>
+            <button id="btn-buzon-chat-${index}" style="background: #db2777; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+              💬 Iniciar Chat
+            </button>
+          `}
+        </div>
+      `;
+    });
+
+    list.innerHTML = htmlOutput;
+
+    // Asignar los eventos de clic a cada botón generado
+    resultadosAfinidad.forEach((r, index) => {
+      const textoPorcentaje = r.esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
+      const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
+      const btn = document.getElementById(`btn-buzon-chat-${index}`);
+      
+      if (btn) {
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
       }
     });
 
-    if (misChats.length === 0) {
-      list.innerHTML = "<p>Aún no tienes conversaciones abiertas.</p>";
-      return;
-    }
-
-    list.innerHTML = misChats.map((c, idx) => `
-      <div class="match-item" style="cursor: pointer;" id="chat-item-${idx}">
-        <p><b>💬 Chat con ${c.otroNombre}</b> <small>(${c.porcentaje})</small></p>
-        <p style="color: #ccc; font-size: 0.9em;">"${c.ultimoMsg || 'Haz clic para abrir el chat'}"</p>
-      </div>
-    `).join('');
-
-    misChats.forEach((c, idx) => {
-      const el = document.getElementById(`chat-item-${idx}`);
-      if (el) el.onclick = () => window.abrirSalaChat(miNombre, c.otroNombre, c.porcentaje);
-    });
   } catch (e) {
-    console.error("Error al cargar chats:", e);
-    list.innerHTML = "<p>Error al cargar la lista de chats.</p>";
+    console.error("Error al cargar el buzón completo:", e);
+    list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información de tu buzón.</p>";
   }
 };
 
