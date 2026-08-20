@@ -417,7 +417,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
     <!-- BOTÓN Y CONTENEDOR DEL JUEGO DE DAMAS -->
     <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" style="background: #131313; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.3px #bcbaba;">
+      <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.3px #bcbaba;">
         ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
       </button>
       
@@ -440,7 +440,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       />
       <button 
         id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #520303 !important; color: #ffffff !important; border: none !important;"
       >
         Enviar mensaje
       </button>
