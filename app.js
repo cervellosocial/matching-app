@@ -1,4 +1,3 @@
-
 // 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -26,7 +25,8 @@ let listenerDamasActivo = null;
 let refDamasActiva = null;
 let usuarioActualGlobal = null;
 
-signInAnonymously(auth)
+// Asegurar la inicialización de sesión
+const authPromise = signInAnonymously(auth)
   .then(() => console.log("Sesión anónima iniciada"))
   .catch((e) => console.error("Error Auth:", e));
 
@@ -93,8 +93,8 @@ function ocultarSecciones() {
     listenerChatActivo = null;
     refChatActiva = null;
   }
-  if (refDamasActivo && listenerDamasActivo) {
-    off(refDamasActivo, "value", listenerDamasActivo);
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
     listenerDamasActivo = null;
     refDamasActiva = null;
   }
@@ -105,6 +105,7 @@ function ocultarSecciones() {
 }
 
 window.guardarYEmparejar = async function() {
+  await authPromise;
   const nombreInput = document.getElementById("username");
   const pinInput = document.getElementById("user-pin");
   const edadInput = document.getElementById("user-age");
@@ -266,6 +267,7 @@ function mostrarResultados(resultados, miNombre) {
 }
 
 window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
+  await authPromise;
   const chatId = obtenerChatId(miNombre, otroNombre);
   try {
     const chatRef = ref(db, `chats/${chatId}`);
@@ -285,6 +287,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial,
 };
 
 window.accederBuzon = async function() {
+  await authPromise;
   const nombreInput = document.getElementById("login-name");
   const pinInput = document.getElementById("login-pin");
 
@@ -320,6 +323,7 @@ window.accederBuzon = async function() {
 };
 
 window.cargarListaChats = async function(miNombre) {
+  await authPromise;
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -573,7 +577,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 // 6. JUEGO DE CINCO EN RAYA (GOMOKU)
 
 function obtenerTableroInicial(jugador1, jugador2) {
-  // Crear tablero 7x7 vacío
   const tablero = [];
   for (let r = 0; r < 7; r++) {
     tablero[r] = [];
@@ -592,7 +595,6 @@ function obtenerTableroInicial(jugador1, jugador2) {
 }
 
 window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
-  // Desactivar cualquier listener previo para evitar ralentización
   if (refDamasActiva) {
     off(refDamasActiva);
     refDamasActiva = null;
@@ -635,8 +637,6 @@ function renderizarTableroCincoEnRaya(estado, chatId, miNombre) {
   grid.style.gridTemplateRows = "repeat(7, 40px)";
   
   const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-  const soyRojo = estado.jugadorRojo.toLowerCase() === miNombre.toLowerCase();
-  const miColorFicha = soyRojo ? 'R' : 'N';
 
   for (let r = 0; r < 7; r++) {
     for (let c = 0; c < 7; c++) {
@@ -648,11 +648,10 @@ function renderizarTableroCincoEnRaya(estado, chatId, miNombre) {
       cell.style.display = "flex";
       cell.style.alignItems = "center";
       cell.style.justifyContent = "center";
-      cell.style.backgroundColor = "#ffffff"; // Tablero blanco
+      cell.style.backgroundColor = "#ffffff";
       cell.style.border = "1px solid #ccc";
       cell.style.cursor = (esMiTurno && !estado.ganador && contenidoFicha === '') ? "pointer" : "default";
 
-      // Dibujar fichas
       if (contenidoFicha === 'R') {
         cell.innerHTML = "<div style='width:28px; height:28px; border-radius:50%; background:#ef4444; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'></div>";
       } else if (contenidoFicha === 'N') {
@@ -661,7 +660,6 @@ function renderizarTableroCincoEnRaya(estado, chatId, miNombre) {
 
       cell.onclick = () => {
         if (estado.ganador || !esMiTurno || contenidoFicha !== '') return;
-
         colocarFicha(estado, { r, c }, chatId, miNombre);
       };
 
@@ -675,13 +673,10 @@ async function colocarFicha(estado, posicion, chatId, miNombre) {
   const soyRojo = estado.jugadorRojo.toLowerCase() === miNombre.toLowerCase();
   const miColorFicha = soyRojo ? 'R' : 'N';
   
-  // Colocar ficha
   nuevasFichas[posicion.r][posicion.c] = miColorFicha;
 
-  // Verificar si hay ganador (5 en línea)
   const ganador = verificarGanador(nuevasFichas, miColorFicha, posicion);
   
-  // Verificar si el tablero está lleno (empate)
   let tableroLleno = true;
   for (let r = 0; r < 7; r++) {
     for (let c = 0; c < 7; c++) {
@@ -705,7 +700,6 @@ async function colocarFicha(estado, posicion, chatId, miNombre) {
       fichas: nuevasFichas
     });
   } else if (tableroLleno) {
-    // Empate: reiniciar tablero
     const nuevoTablero = obtenerTableroInicial(estado.jugadorRojo, estado.jugadorNegro);
     await update(ref(db, `chats/${chatId}/damas`), nuevoTablero);
     alert("¡Empate! Tablero lleno. Reiniciando juego...");
@@ -722,18 +716,16 @@ function verificarGanador(tablero, color, ultimaPosicion) {
   const r = ultimaPosicion.r;
   const c = ultimaPosicion.c;
   
-  // Direcciones a verificar: horizontal, vertical, diagonal 1, diagonal 2
   const direcciones = [
-    { dr: 0, dc: 1 },  // Horizontal
-    { dr: 1, dc: 0 },  // Vertical
-    { dr: 1, dc: 1 },  // Diagonal \
-    { dr: 1, dc: -1 }  // Diagonal /
+    { dr: 0, dc: 1 },
+    { dr: 1, dc: 0 },
+    { dr: 1, dc: 1 },
+    { dr: 1, dc: -1 }
   ];
 
   for (const { dr, dc } of direcciones) {
-    let contador = 1; // Incluye la ficha recién colocada
+    let contador = 1;
     
-    // Contar en dirección positiva
     for (let i = 1; i < 5; i++) {
       const nr = r + dr * i;
       const nc = c + dc * i;
@@ -744,7 +736,6 @@ function verificarGanador(tablero, color, ultimaPosicion) {
       }
     }
     
-    // Contar en dirección negativa
     for (let i = 1; i < 5; i++) {
       const nr = r - dr * i;
       const nc = c - dc * i;
@@ -761,11 +752,12 @@ function verificarGanador(tablero, color, ultimaPosicion) {
   return false;
 }
 
-// 7. ASIGNACIÓN INICIAL DE EVENTOS AL CARGAR DOM
-document.addEventListener("DOMContentLoaded", () => {
+// 7. ASIGNACIÓN INICIAL DE EVENTOS Y AUTO-LOGIN
+document.addEventListener("DOMContentLoaded", async () => {
   cargarPreguntas();
   window.mostrarSeccion("mode-selector");
 
+  // Asignar eventos directos a los botones principales
   const btnSubmit = document.getElementById("submit-btn");
   if (btnSubmit) btnSubmit.onclick = () => window.guardarYEmparejar();
 
@@ -780,5 +772,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btnVolver = document.getElementById("btn-volver-selector");
   if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
+
+  // Verificar si hay sesión previa guardada en LocalStorage
+  const sesionGuardada = localStorage.getItem("sesion_usuario");
+  if (sesionGuardada) {
+    try {
+      const { nombre } = JSON.parse(sesionGuardada);
+      if (nombre) {
+        usuarioActualGlobal = nombre;
+        await window.cargarListaChats(nombre);
+      }
+    } catch (e) {
+      console.error("Error al autorecuperar la sesión:", e);
+    }
+  }
 });
-```
