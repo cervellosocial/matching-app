@@ -570,12 +570,14 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
 
-// 6. DAMAS
+// 6. JUEGO DE DAMAS (CON REGLAS, CAPTURA Y FIN DE JUEGO)
+
 function obtenerTableroInicial(jugador1, jugador2) {
   return {
     turno: jugador1,
     jugadorBlanco: jugador1,
     jugadorRojo: jugador2,
+    ganador: '',
     fichas: [
       ['', 'R', '', 'R', '', 'R'],
       ['R', '', 'R', '', 'R', ''],
@@ -609,13 +611,17 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   const turnInfo = document.getElementById("damas-turn-info");
   if (!grid || !turnInfo) return;
 
-  const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-  const miColorFicha = soyBlanco ? 'B' : 'R';
+  if (estado.ganador) {
+    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador/a: <b>${estado.ganador}</b></span>`;
+  } else {
+    const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
+    const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+    const miColorFicha = soyBlanco ? 'B' : 'R';
 
-  turnInfo.innerHTML = esMiTurno 
-    ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
-    : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
+    turnInfo.innerHTML = esMiTurno 
+      ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
+      : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
+  }
 
   grid.innerHTML = "";
 
@@ -631,7 +637,7 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
       cell.style.alignItems = "center";
       cell.style.justifyContent = "center";
       cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
-      cell.style.cursor = esCasillaOscura ? "pointer" : "default";
+      cell.style.cursor = (esCasillaOscura && !estado.ganador) ? "pointer" : "default";
 
       if (contenidoFicha === 'B') {
         cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000;'></div>";
@@ -644,7 +650,12 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
       }
 
       cell.onclick = () => {
+        if (estado.ganador) return;
+        const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
         if (!esMiTurno || !esCasillaOscura) return;
+
+        const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+        const miColorFicha = soyBlanco ? 'B' : 'R';
 
         if (contenidoFicha === miColorFicha) {
           fichaSeleccionada = { r, c };
@@ -664,9 +675,57 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
 async function moverFicha(estado, desde, hasta, chatId, miNombre) {
   const nuevasFichas = estado.fichas.map(row => [...row]);
   const colorFicha = nuevasFichas[desde.r][desde.c];
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
 
+  // Blancas avanzan hacia arriba (-1), Rojas hacia abajo (+1)
+  const dirR = soyBlanco ? -1 : 1; 
+  const diffR = hasta.r - desde.r;
+  const diffC = Math.abs(hasta.c - desde.c);
+
+  let esMovimientoValido = false;
+  let esCaptura = false;
+  let midR = null, midC = null;
+
+  // 1. Movimiento simple de 1 casilla diagonal adelante
+  if (diffR === dirR && diffC === 1) {
+    esMovimientoValido = true;
+  }
+  // 2. Movimiento de captura (2 casillas diagonal adelante)
+  else if (diffR === dirR * 2 && diffC === 2) {
+    midR = (desde.r + hasta.r) / 2;
+    midC = (desde.c + hasta.c) / 2;
+    const fichaIntermedia = nuevasFichas[midR][midC];
+    const colorEnemigo = soyBlanco ? 'R' : 'B';
+
+    if (fichaIntermedia === colorEnemigo) {
+      esMovimientoValido = true;
+      esCaptura = true;
+    }
+  }
+
+  if (!esMovimientoValido) return; // Si no cumple la regla diagonal/distancia, ignora el movimiento
+
+  // Mover ficha
   nuevasFichas[desde.r][desde.c] = '';
   nuevasFichas[hasta.r][hasta.c] = colorFicha;
+
+  // Si fue captura, eliminar la ficha comida
+  if (esCaptura) {
+    nuevasFichas[midR][midC] = '';
+  }
+
+  // Comprobar si hay un ganador (quedar sin fichas)
+  let numBlancas = 0, numRojas = 0;
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      if (nuevasFichas[r][c] === 'B') numBlancas++;
+      if (nuevasFichas[r][c] === 'R') numRojas++;
+    }
+  }
+
+  let ganador = '';
+  if (numBlancas === 0) ganador = estado.jugadorRojo;
+  if (numRojas === 0) ganador = estado.jugadorBlanco;
 
   const otroJugador = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase() 
     ? estado.jugadorRojo 
@@ -674,7 +733,8 @@ async function moverFicha(estado, desde, hasta, chatId, miNombre) {
 
   await update(ref(db, `chats/${chatId}/damas`), {
     ...estado,
-    turno: otroJugador,
+    turno: ganador ? '' : otroJugador,
+    ganador: ganador,
     fichas: nuevasFichas
   });
 }
