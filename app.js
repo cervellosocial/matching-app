@@ -31,18 +31,6 @@ signInAnonymously(auth)
   .catch((e) => console.error("Error Auth:", e));
 
 // 4. DATOS Y PREGUNTAS
-const preguntasRompehielos = [
-  "¿Cuál ha sido el último concierto/evento al que has ido? ¿O el próximo que tienes ganas de ir?",
-  "¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
-  "¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
-  "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?",
-  "¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
-  "Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
-  "¿Hay algo que la gente suele asumir de ti que no es cierto?",
-  "¿Qué es lo último que te ha hecho reír en voz alta?",
-  "¿Tienes alguna manía o ritual extraño que hagas sin pensar?"
-];
-
 const preguntas = [
   { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
   { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
@@ -92,6 +80,30 @@ function evaluarCondicionales() {
   });
 }
 
+// 5. MÉTODOS EXPUESTOS A WINDOW PARA EVENTOS
+window.mostrarSeccion = function(id) {
+  ocultarSecciones();
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("hidden");
+};
+
+function ocultarSecciones() {
+  if (refChatActiva && listenerChatActivo) {
+    off(refChatActiva, "value", listenerChatActivo);
+    listenerChatActivo = null;
+    refChatActiva = null;
+  }
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
+    listenerDamasActivo = null;
+    refDamasActiva = null;
+  }
+  ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+}
+
 window.guardarYEmparejar = async function() {
   const nombreInput = document.getElementById("username");
   const pinInput = document.getElementById("user-pin");
@@ -99,15 +111,15 @@ window.guardarYEmparejar = async function() {
   const minEdadInput = document.getElementById("min-age");
   const maxEdadInput = document.getElementById("max-age");
 
-  if (!nombreInput || !pinInput) return;
+  if (!nombreInput || !pinInput) return alert("Error interno: Faltan inputs del formulario en tu HTML.");
 
   const nombre = nombreInput.value.trim();
   const pin = pinInput.value.trim();
-  const edad = parseInt(edadInput.value);
-  const minEdad = parseInt(minEdadInput.value);
-  const maxEdad = parseInt(maxEdadInput.value);
+  const edad = edadInput ? parseInt(edadInput.value) : 18;
+  const minEdad = minEdadInput ? parseInt(minEdadInput.value) : 18;
+  const maxEdad = maxEdadInput ? parseInt(maxEdadInput.value) : 99;
 
-  if (!nombre || !pin || pin.length !== 4) return alert("Nombre y PIN de 4 dígitos obligatorios.");
+  if (!nombre || !pin || pin.length !== 4) return alert("El Nombre y un PIN exacto de 4 dígitos son obligatorios.");
 
   const submitBtn = document.getElementById("submit-btn");
   if (submitBtn) {
@@ -123,18 +135,19 @@ window.guardarYEmparejar = async function() {
 
     if (snapshot.exists()) {
       Object.values(snapshot.val()).forEach(u => {
-        if (u.nombre.toLowerCase() === nombre.toLowerCase()) usuarioExistente = u;
+        if (u.nombre && u.nombre.toLowerCase() === nombre.toLowerCase()) usuarioExistente = u;
         else otrosUsuarios.push(u);
       });
     }
 
     if (usuarioExistente) {
       if (usuarioExistente.pin !== pin) {
-        alert("Este nombre ya está registrado con otro PIN. Usa el PIN correcto o elige otro nombre.");
+        alert("Este nombre ya está registrado con otro PIN.");
+        if (submitBtn) { submitBtn.innerText = "Guardar y Buscar Matches"; submitBtn.disabled = false; }
         return;
       }
       
-      alert("⚠️ Ya has completado este formulario previamente. Accediendo a tus chats.");
+      alert("⚠️ Usuario verificado. Accediendo a tus chats.");
       usuarioActualGlobal = usuarioExistente.nombre;
       localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: usuarioExistente.nombre, pin }));
       
@@ -142,16 +155,15 @@ window.guardarYEmparejar = async function() {
       return;
     }
 
-    if (isNaN(edad) || edad < 18 || isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) {
-      return alert("Revisa los rangos de edad.");
-    }
-
     const respuestas = {};
     for (const q of preguntas) {
       const bloque = document.getElementById(`block-${q.id}`);
       if (bloque && !bloque.classList.contains("hidden")) {
         const sel = document.querySelector(`input[name="${q.id}"]:checked`);
-        if (!sel) return alert(`Responde: "${q.texto}"`);
+        if (!sel) {
+          if (submitBtn) { submitBtn.innerText = "Guardar y Buscar Matches"; submitBtn.disabled = false; }
+          return alert(`Responde a la pregunta: "${q.texto}"`);
+        }
         respuestas[q.id] = sel.value;
       }
     }
@@ -166,8 +178,8 @@ window.guardarYEmparejar = async function() {
     mostrarResultados(resultados, nuevoUsuario.nombre);
 
   } catch (e) {
-    console.error(e);
-    alert("Error conectando con la base de datos.");
+    console.error("Error al guardar/emparejar:", e);
+    alert("Ocurrió un error al guardar en la base de datos: " + e.message);
   } finally {
     if (submitBtn) {
       submitBtn.innerText = "Guardar y Buscar Matches";
@@ -179,7 +191,7 @@ window.guardarYEmparejar = async function() {
 function calcularEmparejamientos(usuarioActual, listaUsuarios) {
   return listaUsuarios
     .filter(u => {
-      if (!u.edad || !u.rangoBuscado) return false; 
+      if (!u.edad || !u.rangoBuscado) return true;
       return usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max &&
              u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
     })
@@ -201,7 +213,7 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
       return { 
-        nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
+        nombre: u.nombre, edad: u.edad || '?', porcentajeMatch, porcentajeGilicrush,
         esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
       };
     })
@@ -219,7 +231,7 @@ function mostrarResultados(resultados, miNombre) {
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
 
   if (matchesFiltrados.length === 0) {
-    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil guardado! Aún no hay perfiles con el 90% de compatibilidad en tu rango de edad.</p>";
+    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! Aún no hay perfiles con el 90% de compatibilidad en tu rango. Puedes acceder desde el Buzón cuando haya nuevos perfiles.</p>";
     return;
   }
 
@@ -253,8 +265,6 @@ function mostrarResultados(resultados, miNombre) {
   });
 }
 
-// 5. CHAT Y BUZÓN
-
 window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
   const chatId = obtenerChatId(miNombre, otroNombre);
   try {
@@ -263,13 +273,14 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial,
     if (!snapshot.exists()) {
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
-        porcentaje: porcentajeText,
+        porcentaje: porcentajeText || "",
         fecha: Date.now()
       });
     }
-    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText || "");
   } catch (e) {
-    console.error("Error al iniciar o cargar el chat:", e);
+    console.error("Error al iniciar/cargar chat:", e);
+    alert("Error al conectar con la sala de chat.");
   }
 };
 
@@ -277,12 +288,12 @@ window.accederBuzon = async function() {
   const nombreInput = document.getElementById("login-name");
   const pinInput = document.getElementById("login-pin");
 
-  if (!nombreInput || !pinInput) return;
+  if (!nombreInput || !pinInput) return alert("Campos de inicio de sesión no encontrados.");
 
   const nombre = nombreInput.value.trim();
   const pin = pinInput.value.trim();
 
-  if (!nombre || !pin) return alert("Ingresa tu nombre y PIN.");
+  if (!nombre || !pin) return alert("Ingresa tu nombre y PIN de 4 dígitos.");
 
   try {
     const dbRef = ref(db);
@@ -291,7 +302,7 @@ window.accederBuzon = async function() {
 
     if (snapshot.exists()) {
       Object.values(snapshot.val()).forEach(u => {
-        if (u.nombre.toLowerCase() === nombre.toLowerCase() && u.pin === pin) {
+        if (u.nombre && u.nombre.toLowerCase() === nombre.toLowerCase() && u.pin === pin) {
           usuarioValido = true;
           usuarioActualGlobal = u.nombre;
           localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: u.nombre, pin }));
@@ -325,7 +336,7 @@ window.cargarListaChats = async function(miNombre) {
 
     if (snapshotUsuarios.exists()) {
       Object.values(snapshotUsuarios.val()).forEach(u => {
-        if (u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
+        if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
         else otrosUsuarios.push(u);
       });
     }
@@ -345,11 +356,13 @@ window.cargarListaChats = async function(miNombre) {
         const chat = chatsData[chatId];
         if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
           const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
-          chatsExistentes[otroNombre.toLowerCase()] = {
-            chatId,
-            ultimoMsg: chat.ultimoMensaje || "",
-            porcentaje: chat.porcentaje || ""
-          };
+          if (otroNombre) {
+            chatsExistentes[otroNombre.toLowerCase()] = {
+              chatId,
+              ultimoMsg: chat.ultimoMensaje || "",
+              porcentaje: chat.porcentaje || ""
+            };
+          }
         }
       });
     }
@@ -361,7 +374,7 @@ window.cargarListaChats = async function(miNombre) {
 
     Object.keys(chatsExistentes).forEach(nombreOtro => {
       if (!mapaFinalConexiones.has(nombreOtro)) {
-        const usuarioEncontrado = otrosUsuarios.find(u => u.nombre.toLowerCase() === nombreOtro);
+        const usuarioEncontrado = otrosUsuarios.find(u => u.nombre && u.nombre.toLowerCase() === nombreOtro);
         mapaFinalConexiones.set(nombreOtro, {
           nombre: usuarioEncontrado ? usuarioEncontrado.nombre : nombreOtro,
           edad: usuarioEncontrado ? usuarioEncontrado.edad : '?',
@@ -379,9 +392,9 @@ window.cargarListaChats = async function(miNombre) {
       list.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
           <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
-          <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px; cursor:pointer;">Cerrar Sesión</button>
+          <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
         </div>
-        <p style='color: #ffffff;'>Aún no hay conexiones con al menos un 90% de compatibilidad u oposición.</p>
+        <p style='color: #ffffff;'>Aún no hay conexiones registradas.</p>
       `;
       return;
     }
@@ -389,7 +402,7 @@ window.cargarListaChats = async function(miNombre) {
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
         <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
-        <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px; cursor:pointer;">Cerrar Sesión</button>
+        <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
       </div>
     `;
 
@@ -435,8 +448,8 @@ window.cargarListaChats = async function(miNombre) {
     });
 
   } catch (e) {
-    console.error("Error al cargar el buzón completo:", e);
-    list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información de tu buzón.</p>";
+    console.error("Error al cargar buzón:", e);
+    list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información del buzón.</p>";
   }
 };
 
@@ -462,8 +475,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     </div>
 
     <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
-        ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
+      <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        ♟️ Abrir / Ocultar Juego de Damas
       </button>
       
       <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
@@ -481,7 +494,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
         type="text" 
         id="chat-input" 
         placeholder="Escribe tu mensaje aquí..." 
-        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" 
+        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important;" 
       />
       <button 
         id="btn-send-msg" 
@@ -496,9 +509,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     const btnToggle = document.getElementById("btn-toggle-damas");
     const container = document.getElementById("damas-board-container");
     if (btnToggle && container) {
-      btnToggle.onclick = () => {
-        container.classList.toggle("hidden");
-      };
+      btnToggle.onclick = () => container.classList.toggle("hidden");
     }
   }, 50);
 
@@ -515,22 +526,21 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       const msgsObj = snapshot.val();
       const msgsArray = Object.values(msgsObj);
 
-      let htmlContent = msgsArray.map(m => {
+      box.innerHTML = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
         const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
 
         return `
           <div style="${alineacion} margin-bottom: 10px;">
-            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left;">
               <small style="color: #000000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
-              <span style="font-size: 15px !important; line-height: 1.3 !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
+              <span style="font-size: 15px !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
       }).join('');
 
-      box.innerHTML = htmlContent;
       box.scrollTop = box.scrollHeight;
     } else {
       box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
@@ -551,7 +561,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       await update(ref(db, `chats/${chatId}`), { ultimoMensaje: txt, fecha: Date.now() });
     } catch (e) {
       console.error("Error al enviar mensaje:", e);
-      alert("No se pudo enviar el mensaje.");
     }
   };
 
@@ -670,44 +679,23 @@ async function moverFicha(estado, desde, hasta, chatId, miNombre) {
   });
 }
 
-// 7. GESTIÓN DE VISTAS Y EVENTOS INICIALES
-window.mostrarSeccion = function(id) {
-  ocultarSecciones();
-  const el = document.getElementById(id);
-  if (el) el.classList.remove("hidden");
-};
-
-function ocultarSecciones() {
-  if (refChatActiva && listenerChatActivo) {
-    off(refChatActiva, "value", listenerChatActivo);
-    listenerChatActivo = null;
-    refChatActiva = null;
-  }
-  if (refDamasActiva && listenerDamasActivo) {
-    off(refDamasActiva, "value", listenerDamasActivo);
-    listenerDamasActivo = null;
-    refDamasActiva = null;
-  }
-  ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add("hidden");
-  });
-}
-
+// 7. ASIGNACIÓN INICIAL DE EVENTOS AL CARGAR DOM
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
-
   window.mostrarSeccion("mode-selector");
 
+  const btnSubmit = document.getElementById("submit-btn");
+  if (btnSubmit) btnSubmit.onclick = () => window.guardarYEmparejar();
+
   const btnQuiz = document.getElementById("btn-ir-quiz");
-  if (btnQuiz) btnQuiz.addEventListener("click", () => window.mostrarSeccion("quiz-section"));
+  if (btnQuiz) btnQuiz.onclick = () => window.mostrarSeccion("quiz-section");
 
   const btnLogin = document.getElementById("btn-ir-login");
-  if (btnLogin) btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
+  if (btnLogin) btnLogin.onclick = () => window.mostrarSeccion("login-section");
 
   const btnEntrarBuzon = document.getElementById("btn-entrar-buzon");
-  if (btnEntrarBuzon) btnEntrarBuzon.addEventListener("click", () => window.accederBuzon());
+  if (btnEntrarBuzon) btnEntrarBuzon.onclick = () => window.accederBuzon();
 
   const btnVolver = document.getElementById("btn-volver-selector");
-  if (btnVolver) btnVolver.addEventListener("click", () => window.mostrarSeccion("mode-selector"));
+  if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
 });
