@@ -14,7 +14,7 @@ const firebaseConfig = {
   measurementId: "G-95PP7Q5X6D"
 };
 
-// 3. INICIALIZACIÓN DE SERVICIOS Y VARIABLES GLOBALES
+// 3. INICIALIZACIÓN DE SERVICIOS
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -31,6 +31,18 @@ signInAnonymously(auth)
   .catch((e) => console.error("Error Auth:", e));
 
 // 4. DATOS Y PREGUNTAS
+const preguntasRompehielos = [
+  "¿Cuál ha sido el último concierto/evento al que has ido? ¿O el próximo que tienes ganas de ir?",
+  "¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
+  "¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
+  "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?",
+  "¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
+  "Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
+  "¿Hay algo que la gente suele asumir de ti que no es cierto?",
+  "¿Qué es lo último que te ha hecho reír en voz alta?",
+  "¿Tienes alguna manía o ritual extraño que hagas sin pensar?"
+];
+
 const preguntas = [
   { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
   { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
@@ -38,8 +50,7 @@ const preguntas = [
   { id: "q4", texto: "¿Te gusta la humillación suave?", opA: "Sí 😳", opB: "No 🚫", regla: "igual" },
   { id: "q5", texto: "¿Prefieres 24/7 o sesiones puntuales?", opA: "24/7 ⏰", opB: "Sesiones puntuales 📅", regla: "igual" },
   { id: "q6", texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", opA: "Sí 🗳️", opB: "No 🚫", regla: "igual" },
-  { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } },
-  { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria / Rompehielos", opB: "📜 Reglas de comportamiento y juegos", regla: "igual" }
+  { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } }
 ];
 
 function obtenerChatId(user1, user2) {
@@ -68,8 +79,6 @@ function evaluarCondicionales() {
     if (q.dependeDe) {
       const padre = document.querySelector(`input[name="${q.dependeDe.preguntaId}"]:checked`);
       const bloqueHijo = document.getElementById(`block-${q.id}`);
-      if (!bloqueHijo) return;
-      
       if (padre && padre.value === q.dependeDe.valorRequerido) {
         bloqueHijo.classList.remove("hidden");
       } else {
@@ -80,58 +89,18 @@ function evaluarCondicionales() {
   });
 }
 
-// 5. NAVEGACIÓN Y CONTROL DE VISTAS
-function ocultarSecciones() {
-  if (refChatActiva && listenerChatActivo) {
-    off(refChatActiva, "value", listenerChatActivo);
-    listenerChatActivo = null;
-    refChatActiva = null;
-  }
-  if (refDamasActiva && listenerDamasActivo) {
-    off(refDamasActiva, "value", listenerDamasActivo);
-    listenerDamasActivo = null;
-    refDamasActiva = null;
-  }
-  ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add("hidden");
-  });
-}
+window.guardarYEmparejar = async function() {
+  const nombre = document.getElementById("username").value.trim();
+  const pin = document.getElementById("user-pin").value.trim();
+  const edad = parseInt(document.getElementById("user-age").value);
+  const minEdad = parseInt(document.getElementById("min-age").value);
+  const maxEdad = parseInt(document.getElementById("max-age").value);
 
-function mostrarSeccion(id) {
-  ocultarSecciones();
-  const el = document.getElementById(id);
-  if (el) {
-    el.classList.remove("hidden");
-    if (id === "quiz-section") {
-      cargarPreguntas();
-    }
-  }
-}
-
-// 6. PROCESO DE REGISTRO Y EMPAREJAMIENTO
-async function guardarYEmparejar() {
-  const nombreInput = document.getElementById("username");
-  const pinInput = document.getElementById("user-pin");
-  const edadInput = document.getElementById("user-age");
-  const minEdadInput = document.getElementById("min-age");
-  const maxEdadInput = document.getElementById("max-age");
-
-  if (!nombreInput || !pinInput) return alert("Faltan campos de entrada en el formulario.");
-
-  const nombre = nombreInput.value.trim();
-  const pin = pinInput.value.trim();
-  const edad = edadInput ? parseInt(edadInput.value) : 18;
-  const minEdad = minEdadInput ? parseInt(minEdadInput.value) : 18;
-  const maxEdad = maxEdadInput ? parseInt(maxEdadInput.value) : 99;
-
-  if (!nombre || !pin || pin.length !== 4) return alert("El Nombre y un PIN exacto de 4 dígitos son obligatorios.");
+  if (!nombre || !pin || pin.length !== 4) return alert("Nombre y PIN de 4 dígitos obligatorios.");
 
   const submitBtn = document.getElementById("submit-btn");
-  if (submitBtn) {
-    submitBtn.innerText = "Verificando...";
-    submitBtn.disabled = true;
-  }
+  submitBtn.innerText = "Verificando...";
+  submitBtn.disabled = true;
 
   try {
     const dbRef = ref(db);
@@ -141,24 +110,27 @@ async function guardarYEmparejar() {
 
     if (snapshot.exists()) {
       Object.values(snapshot.val()).forEach(u => {
-        if (u.nombre && u.nombre.toLowerCase() === nombre.toLowerCase()) usuarioExistente = u;
+        if (u.nombre.toLowerCase() === nombre.toLowerCase()) usuarioExistente = u;
         else otrosUsuarios.push(u);
       });
     }
 
     if (usuarioExistente) {
       if (usuarioExistente.pin !== pin) {
-        alert("Este nombre ya está registrado con otro PIN.");
-        if (submitBtn) { submitBtn.innerText = "Guardar y Buscar Matches"; submitBtn.disabled = false; }
+        alert("Este nombre ya está registrado con otro PIN. Usa el PIN correcto o elige otro nombre.");
         return;
       }
       
-      alert("⚠️ Usuario verificado. Accediendo a tus chats.");
+      alert("⚠️ Ya has completado este formulario previamente. No es posible repetirlo.");
       usuarioActualGlobal = usuarioExistente.nombre;
       localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: usuarioExistente.nombre, pin }));
       
-      await cargarListaChats(usuarioExistente.nombre);
+      await window.cargarListaChats(usuarioExistente.nombre);
       return;
+    }
+
+    if (isNaN(edad) || edad < 18 || isNaN(minEdad) || isNaN(maxEdad) || minEdad > maxEdad) {
+      return alert("Revisa los rangos de edad.");
     }
 
     const respuestas = {};
@@ -166,10 +138,7 @@ async function guardarYEmparejar() {
       const bloque = document.getElementById(`block-${q.id}`);
       if (bloque && !bloque.classList.contains("hidden")) {
         const sel = document.querySelector(`input[name="${q.id}"]:checked`);
-        if (!sel) {
-          if (submitBtn) { submitBtn.innerText = "Guardar y Buscar Matches"; submitBtn.disabled = false; }
-          return alert(`Responde a la pregunta: "${q.texto}"`);
-        }
+        if (!sel) return alert(`Responde: "${q.texto}"`);
         respuestas[q.id] = sel.value;
       }
     }
@@ -184,20 +153,18 @@ async function guardarYEmparejar() {
     mostrarResultados(resultados, nuevoUsuario.nombre);
 
   } catch (e) {
-    console.error("Error al guardar/emparejar:", e);
-    alert("Ocurrió un error en la base de datos: " + e.message);
+    console.error(e);
+    alert("Error conectando con la base de datos.");
   } finally {
-    if (submitBtn) {
-      submitBtn.innerText = "Guardar y Buscar Matches";
-      submitBtn.disabled = false;
-    }
+    submitBtn.innerText = "Guardar y Buscar Matches";
+    submitBtn.disabled = false;
   }
-}
+};
 
 function calcularEmparejamientos(usuarioActual, listaUsuarios) {
   return listaUsuarios
     .filter(u => {
-      if (!u.edad || !u.rangoBuscado) return true;
+      if (!u.edad || !u.rangoBuscado) return false; 
       return usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max &&
              u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
     })
@@ -218,8 +185,9 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeMatch = comparables > 0 ? Math.round((aciertos / comparables) * 100) : 0;
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
+      // FILTRO AJUSTADO AL 90%
       return { 
-        nombre: u.nombre, edad: u.edad || '?', porcentajeMatch, porcentajeGilicrush,
+        nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
         esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
       };
     })
@@ -230,14 +198,12 @@ function mostrarResultados(resultados, miNombre) {
   ocultarSecciones();
   const resultsSection = document.getElementById("results-section");
   const matchesList = document.getElementById("matches-list");
-  if (!resultsSection || !matchesList) return;
-
   resultsSection.classList.remove("hidden");
 
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
 
   if (matchesFiltrados.length === 0) {
-    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! Aún no hay perfiles con el 90% de compatibilidad. Puedes revisar el buzón más tarde.</p>";
+    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil guardado! Aún no hay perfiles con el 90% de compatibilidad en tu rango de edad.</p>";
     return;
   }
 
@@ -246,6 +212,7 @@ function mostrarResultados(resultados, miNombre) {
     const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
     const etiqueta = esGilicrush ? "💀 ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
+    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
     return `
       <div class="${claseCard}">
@@ -254,6 +221,8 @@ function mostrarResultados(resultados, miNombre) {
           <p>Has conectado con <b>${r.nombre} (${r.edad} años)</b> - <b>${textoPorcentaje}</b></p>
         </div>
         <div class="icebreaker-box">
+          <p class="icebreaker-question"><b>🎲 Pregunta sugerida:</b></p>
+          <p class="question-text"><i>"${preguntaElegida}"</i></p>
           <button id="btn-send-${index}">💬 Iniciar Chat con ${r.nombre}</button>
         </div>
       </div>
@@ -263,25 +232,22 @@ function mostrarResultados(resultados, miNombre) {
   matchesFiltrados.forEach((r, index) => {
     const esGilicrush = r.porcentajeGilicrush > r.porcentajeMatch;
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
+    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, null);
+      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
     }
   });
 }
 
-// 7. BUZÓN Y AUTENTICACIÓN
-async function accederBuzon() {
-  const nombreInput = document.getElementById("login-name");
-  const pinInput = document.getElementById("login-pin");
+// 5. CHAT Y BUZÓN
 
-  if (!nombreInput || !pinInput) return alert("Campos de acceso no encontrados.");
+window.accederBuzon = async function() {
+  const nombre = document.getElementById("login-name").value.trim();
+  const pin = document.getElementById("login-pin").value.trim();
 
-  const nombre = nombreInput.value.trim();
-  const pin = pinInput.value.trim();
-
-  if (!nombre || !pin) return alert("Ingresa tu nombre y tu PIN.");
+  if (!nombre || !pin) return alert("Ingresa tu nombre y PIN.");
 
   try {
     const dbRef = ref(db);
@@ -290,7 +256,7 @@ async function accederBuzon() {
 
     if (snapshot.exists()) {
       Object.values(snapshot.val()).forEach(u => {
-        if (u.nombre && u.nombre.toLowerCase() === nombre.toLowerCase() && u.pin === pin) {
+        if (u.nombre.toLowerCase() === nombre.toLowerCase() && u.pin === pin) {
           usuarioValido = true;
           usuarioActualGlobal = u.nombre;
           localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: u.nombre, pin }));
@@ -299,33 +265,36 @@ async function accederBuzon() {
     }
 
     if (!usuarioValido) return alert("Nombre o PIN incorrectos.");
-    await cargarListaChats(usuarioActualGlobal);
+    await window.cargarListaChats(usuarioActualGlobal);
 
   } catch (e) {
     console.error(e);
     alert("Error al acceder al buzón.");
   }
-}
+};
 
-async function cargarListaChats(miNombre) {
+window.cargarListaChats = async function(miNombre) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
-  if (!mailbox || !list) return;
-
   mailbox.classList.remove("hidden");
+
   list.innerHTML = "<p style='color: #ffffff;'>Cargando tu buzón...</p>";
 
   try {
     const dbRef = ref(db);
+    
     const snapshotUsuarios = await get(child(dbRef, "usuarios"));
     let miUsuario = null;
     const otrosUsuarios = [];
 
     if (snapshotUsuarios.exists()) {
       Object.values(snapshotUsuarios.val()).forEach(u => {
-        if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
-        else otrosUsuarios.push(u);
+        if (u.nombre.toLowerCase() === miNombre.toLowerCase()) {
+          miUsuario = u;
+        } else {
+          otrosUsuarios.push(u);
+        }
       });
     }
 
@@ -335,6 +304,7 @@ async function cargarListaChats(miNombre) {
     }
 
     const resultadosAfinidad = calcularEmparejamientos(miUsuario, otrosUsuarios);
+
     const snapshotChats = await get(child(dbRef, "chats"));
     const chatsExistentes = {};
 
@@ -344,26 +314,28 @@ async function cargarListaChats(miNombre) {
         const chat = chatsData[chatId];
         if (chat.participantes && chat.participantes.map(p => p.toLowerCase()).includes(miNombre.toLowerCase())) {
           const otroNombre = chat.participantes.find(p => p.toLowerCase() !== miNombre.toLowerCase());
-          if (otroNombre) {
-            chatsExistentes[otroNombre.toLowerCase()] = {
-              chatId,
-              ultimoMsg: chat.ultimoMensaje || "",
-              porcentaje: chat.porcentaje || "",
-              tipoChat: chat.tipoChat || "pregunta_aleatoria"
-            };
-          }
+          chatsExistentes[otroNombre.toLowerCase()] = {
+            chatId,
+            ultimoMsg: chat.ultimoMensaje || "",
+            porcentaje: chat.porcentaje || ""
+          };
         }
       });
     }
 
     const mapaFinalConexiones = new Map();
+
+    // Solo se añaden automáticamente los que cumplan la condición del 90%
     resultadosAfinidad.forEach(r => {
-      if (r.esMatch || r.esGilicrush) mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
+      if (r.esMatch || r.esGilicrush) {
+        mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
+      }
     });
 
+    // Mantener los chats que ya han sido iniciados previamente
     Object.keys(chatsExistentes).forEach(nombreOtro => {
       if (!mapaFinalConexiones.has(nombreOtro)) {
-        const usuarioEncontrado = otrosUsuarios.find(u => u.nombre && u.nombre.toLowerCase() === nombreOtro);
+        const usuarioEncontrado = otrosUsuarios.find(u => u.nombre.toLowerCase() === nombreOtro);
         mapaFinalConexiones.set(nombreOtro, {
           nombre: usuarioEncontrado ? usuarioEncontrado.nombre : nombreOtro,
           edad: usuarioEncontrado ? usuarioEncontrado.edad : '?',
@@ -381,17 +353,17 @@ async function cargarListaChats(miNombre) {
       list.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
           <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
-          <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
+          <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
         </div>
-        <p style='color: #ffffff;'>Aún no hay conexiones registradas.</p>
+        <p style='color: #ffffff;'>Aún no hay conexiones con al menos un 90% de compatibilidad u oposición.</p>
       `;
       return;
     }
 
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
-        <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; color:#fff; border:none; font-size: 12px; cursor:pointer; border-radius:4px;">Cerrar Sesión</button>
+        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones (90%+)</h3>
+        <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
       </div>
     `;
 
@@ -409,13 +381,13 @@ async function cargarListaChats(miNombre) {
             <p><b>Afinidad:</b> ${textoPorcentaje}</p>
           </div>
           ${chatIniciado ? `
-            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p>
+            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p> 
             <button id="btn-buzon-chat-${index}" style="background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Continuar Conversación
             </button>
           ` : `
             <p style="color: #bbb; font-size: 0.85em; margin: 8px 0;"><i>Aún no habéis hablado. ¡Inicia la conversación!</i></p>
-            <button id="btn-buzon-chat-${index}" style="background: #db2777; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button id="btn-buzon-chat-${index}" style="background: #52525e; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Iniciar Chat
             </button>
           `}
@@ -429,118 +401,76 @@ async function cargarListaChats(miNombre) {
       const chatIniciado = chatsExistentes[r.nombre.toLowerCase()];
       const esGilicrush = r.porcentajeGilicrush > r.porcentajeMatch;
       const textoPorcentaje = chatIniciado && chatIniciado.porcentaje ? chatIniciado.porcentaje : (esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`);
-      const tipoChat = chatIniciado && chatIniciado.tipoChat ? chatIniciado.tipoChat : "pregunta_aleatoria";
+      const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje, tipoChat);
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
       }
     });
 
   } catch (e) {
-    console.error("Error al cargar buzón:", e);
-    list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información del buzón.</p>";
+    console.error("Error al cargar el buzón completo:", e);
+    list.innerHTML = "<p style='color: #ffffff;'>Error al recuperar la información de tu buzón.</p>";
   }
-}
+};
 
-function cerrarSesion() {
+window.cerrarSesion = function() {
   localStorage.removeItem("sesion_usuario");
   usuarioActualGlobal = null;
-  mostrarSeccion('mode-selector');
-}
+  window.mostrarSeccion('mode-selector');
+};
 
-// 8. MANEJO DEL CHAT
-async function iniciarOCargarChat(miNombre, otroNombre, mensajeInicial, porcentajeText, tipoChatExistente) {
-  const chatId = obtenerChatId(miNombre, otroNombre);
+window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText) {
   try {
+    const chatId = obtenerChatId(miNombre, otroNombre);
     const chatRef = ref(db, `chats/${chatId}`);
     const snapshot = await get(chatRef);
-    
-    let tipoChat = tipoChatExistente || "pregunta_aleatoria";
-    
+
     if (!snapshot.exists()) {
-      const snapshotUsuarios = await get(child(ref(db), "usuarios"));
-      let miUsuario = null, otroUsuario = null;
-      
-      if (snapshotUsuarios.exists()) {
-        Object.values(snapshotUsuarios.val()).forEach(u => {
-          if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
-          if (u.nombre && u.nombre.toLowerCase() === otroNombre.toLowerCase()) otroUsuario = u;
-        });
-      }
-      
-      if (miUsuario && otroUsuario && miUsuario.respuestas && otroUsuario.respuestas) {
-        const miPref = miUsuario.respuestas["q_chat_pref"];
-        const suPref = otroUsuario.respuestas["q_chat_pref"];
-        
-        if (miPref === suPref && miPref === "B") {
-          tipoChat = "reglas_juego";
-        }
-      }
-      
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
-        porcentaje: porcentajeText || "",
-        fecha: Date.now(),
-        tipoChat: tipoChat
+        porcentaje: porcentajeText,
+        ultimoMensaje: primerMensaje,
+        fecha: Date.now()
       });
-    } else {
-      const chatData = snapshot.val();
-      tipoChat = chatData.tipoChat || "pregunta_aleatoria";
-    }
-    
-    abrirSalaChat(miNombre, otroNombre, porcentajeText || "", tipoChat);
-  } catch (e) {
-    console.error("Error al iniciar/cargar chat:", e);
-    alert("Error al conectar con la sala de chat.");
-  }
-}
 
-function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
+      await push(ref(db, `chats/${chatId}/mensajes`), {
+        de: miNombre,
+        texto: primerMensaje,
+        fecha: Date.now()
+      });
+    }
+
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
+  } catch (e) {
+    console.error("Error al crear/iniciar chat:", e);
+    alert("Ocurrió un error al abrir la sala de chat.");
+  }
+};
+
+window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
-  if (!mailbox || !list) return;
-
   mailbox.classList.remove("hidden");
-  const chatId = obtenerChatId(miNombre, otroNombre);
 
-  let contenidoEspecial = "";
-  if (tipoChat === "reglas_juego") {
-    contenidoEspecial = `
-      <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
-        <h4 style="color: #ffd700; margin-bottom: 8px;">📜 Reglas de Juego de Rol</h4>
-        <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 8px;">¡Bienvenidos a su aventura de rol!</p>
-        <ul style="color: #cbd5e1; font-size: 0.85em; padding-left: 20px; margin: 0;">
-          <li>Respeten siempre los límites establecidos</li>
-          <li>Usen ( ) para acciones y narración</li>
-          <li>Usen " " para diálogos</li>
-        </ul>
-      </div>
-    `;
-  }
+  const chatId = obtenerChatId(miNombre, otroNombre);
 
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
-    ${contenidoEspecial}
-
     <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        ♟️ Abrir / Ocultar Juego de Damas
+      <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
+        ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
       </button>
       
       <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin: 0; font-size: 14px;">Cargando tablero...</p>
-          <div style="display: flex; gap: 5px;">
-            <button id="btn-reiniciar-damas" style="background: #dc2626; color: white; border: none; padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;">🔄 Reiniciar</button>
-          </div>
-        </div>
-        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); gap: 2px; justify-content: center;"></div>
+        <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
+        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
       </div>
     </div>
     
@@ -549,31 +479,20 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
     </div>
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
-      <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000 !important; background-color: #fff !important; border: 2px solid #888 !important; border-radius: 6px !important;" />
-      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;">
+      <input 
+        type="text" 
+        id="chat-input" 
+        placeholder="Escribe tu mensaje aquí..." 
+        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" 
+      />
+      <button 
+        id="btn-send-msg" 
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
+      >
         Enviar mensaje
       </button>
     </div>
   `;
-
-  setTimeout(() => {
-    const btnToggle = document.getElementById("btn-toggle-damas");
-    const container = document.getElementById("damas-board-container");
-    const btnReiniciar = document.getElementById("btn-reiniciar-damas");
-    
-    if (btnToggle && container) {
-      btnToggle.onclick = () => container.classList.toggle("hidden");
-    }
-    
-    if (btnReiniciar) {
-      btnReiniciar.onclick = async () => {
-        if (confirm("¿Estás seguro de reiniciar el juego de damas?")) {
-          const nuevoTablero = obtenerTableroInicial(miNombre, otroNombre);
-          await update(ref(db, `chats/${chatId}/damas`), nuevoTablero);
-        }
-      };
-    }
-  }, 50);
 
   if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
 
@@ -588,21 +507,22 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
       const msgsObj = snapshot.val();
       const msgsArray = Object.values(msgsObj);
 
-      box.innerHTML = msgsArray.map(m => {
+      let htmlContent = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
         const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
 
         return `
           <div style="${alineacion} margin-bottom: 10px;">
-            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left;">
-              <small style="color: #000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
-              <span style="font-size: 15px !important; color: #000 !important; font-weight: 500 !important;">${m.texto}</span>
+            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              <small style="color: #000000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
+              <span style="font-size: 15px !important; line-height: 1.3 !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
       }).join('');
 
+      box.innerHTML = htmlContent;
       box.scrollTop = box.scrollHeight;
     } else {
       box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
@@ -613,7 +533,6 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
   const inputEl = document.getElementById("chat-input");
 
   const enviar = async () => {
-    if (!inputEl) return;
     const txt = inputEl.value.trim();
     if (!txt) return;
 
@@ -623,227 +542,190 @@ function abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat) {
       await update(ref(db, `chats/${chatId}`), { ultimoMensaje: txt, fecha: Date.now() });
     } catch (e) {
       console.error("Error al enviar mensaje:", e);
+      alert("No se pudo enviar el mensaje.");
     }
   };
 
-  if (btnSend) btnSend.onclick = enviar;
-  if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
+  btnSend.onclick = enviar;
+  inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  inicializarJuegoDamas(chatId, miNombre, otroNombre);
-}
+  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
+};
 
-// 9. LÓGICA DE JUEGO DE DAMAS
+// 6. DAMAS
 function obtenerTableroInicial(jugador1, jugador2) {
   return {
     turno: jugador1,
     jugadorBlanco: jugador1,
     jugadorRojo: jugador2,
-    ganador: '',
     fichas: [
-      ['', 'R', '', 'R', '', 'R', '', 'R'],
-      ['R', '', 'R', '', 'R', '', 'R', ''],
-      ['', 'R', '', 'R', '', 'R', '', 'R'],
-      ['', '', '', '', '', '', '', ''],
-      ['', '', '', '', '', '', '', ''],
-      ['B', '', 'B', '', 'B', '', 'B', ''],
-      ['', 'B', '', 'B', '', 'B', '', 'B'],
-      ['B', '', 'B', '', 'B', '', 'B', '']
+      ['', 'R', '', 'R', '', 'R'],
+      ['R', '', 'R', '', 'R', ''],
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+      ['', 'B', '', 'B', '', 'B'],
+      ['B', '', 'B', '', 'B', '']
     ]
   };
 }
 
-function inicializarJuegoDamas(chatId, miNombre, otroNombre) {
-  if (refDamasActiva) {
-    off(refDamasActiva);
-    refDamasActiva = null;
-    listenerDamasActivo = null;
-  }
+window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
+  const btnToggle = document.getElementById("btn-toggle-damas");
+  const container = document.getElementById("damas-board-container");
+  
+  if (!btnToggle) return;
+  btnToggle.onclick = () => container.classList.toggle("hidden");
 
-  fichaSeleccionada = null;
+  if (refDamasActiva && listenerDamasActivo) off(refDamasActiva, "value", listenerDamasActivo);
+
   const damasRef = ref(db, `chats/${chatId}/damas`);
   refDamasActiva = damasRef;
 
   listenerDamasActivo = onValue(damasRef, (snapshot) => {
     let estadoDamas = snapshot.val();
-
-    if (!estadoDamas || !estadoDamas.fichas || estadoDamas.fichas.length !== 8) {
+    if (!estadoDamas) {
       estadoDamas = obtenerTableroInicial(miNombre, otroNombre);
       update(damasRef, estadoDamas);
       return;
     }
-
     renderizarTableroDamas(estadoDamas, chatId, miNombre);
   });
-}
+};
 
 function renderizarTableroDamas(estado, chatId, miNombre) {
   const grid = document.getElementById("damas-grid");
   const turnInfo = document.getElementById("damas-turn-info");
   if (!grid || !turnInfo) return;
 
+  const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+  const miColorFicha = soyBlanco ? 'B' : 'R';
+
+  turnInfo.innerHTML = esMiTurno 
+    ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
+    : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
+
   grid.innerHTML = "";
 
-  if (estado.ganador) {
-    turnInfo.innerHTML = `🏆 ¡Ganador: <span style="color:#f59e0b">${estado.ganador}</span>! 🎉`;
-  } else {
-    const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-    turnInfo.innerHTML = esMiTurno 
-      ? `<span style="color:#22c55e">Es tu turno (${miNombre})</span>` 
-      : `<span style="color:#ef4444">Turno de ${estado.turno}</span>`;
-  }
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const cell = document.createElement("div");
+      const esCasillaOscura = (r + c) % 2 !== 0;
+      const contenidoFicha = estado.fichas[r][c];
 
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-  const miColor = soyBlanco ? 'B' : 'R';
+      cell.style.width = "40px";
+      cell.style.height = "40px";
+      cell.style.display = "flex";
+      cell.style.alignItems = "center";
+      cell.style.justifyContent = "center";
+      cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
+      cell.style.cursor = esCasillaOscura ? "pointer" : "default";
 
-  for (let fila = 0; fila < 8; fila++) {
-    for (let col = 0; col < 8; col++) {
-      const casillero = document.createElement("div");
-      const esOscura = (fila + col) % 2 === 1;
-
-      casillero.style.width = "40px";
-      casillero.style.height = "40px";
-      casillero.style.display = "flex";
-      casillero.style.alignItems = "center";
-      casillero.style.justifyContent = "center";
-      casillero.style.backgroundColor = esOscura ? "#334155" : "#f1f5f9";
-      casillero.style.cursor = esOscura ? "pointer" : "default";
-
-      const contenido = estado.fichas[fila][col];
-
-      if (contenido !== '') {
-        const ficha = document.createElement("div");
-        const esReina = contenido.includes("K");
-        const colorFicha = contenido.charAt(0);
-
-        ficha.style.width = "28px";
-        ficha.style.height = "28px";
-        ficha.style.borderRadius = "50%";
-        ficha.style.boxSizing = "border-box";
-        ficha.style.display = "flex";
-        ficha.style.alignItems = "center";
-        ficha.style.justifyContent = "center";
-        ficha.style.fontSize = "12px";
-        ficha.style.fontWeight = "bold";
-
-        if (colorFicha === 'B') {
-          ficha.style.backgroundColor = "#ffffff";
-          ficha.style.border = "3px solid #64748b";
-          ficha.style.color = "#000";
-        } else {
-          ficha.style.backgroundColor = "#dc2626";
-          ficha.style.border = "3px solid #7f1d1d";
-          ficha.style.color = "#fff";
-        }
-
-        if (esReina) ficha.innerText = "👑";
-
-        if (fichaSeleccionada && fichaSeleccionada.fila === fila && fichaSeleccionada.col === col) {
-          ficha.style.boxShadow = "0 0 10px 4px #f59e0b";
-        }
-
-        casillero.appendChild(ficha);
+      if (contenidoFicha === 'B') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000;'></div>";
+      } else if (contenidoFicha === 'R') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000;'></div>";
       }
 
-      casillero.onclick = () => manejarClickCasillero(fila, col, estado, chatId, miNombre, miColor);
-      grid.appendChild(casillero);
+      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
+        cell.style.border = "2px solid #f59e0b";
+      }
+
+      cell.onclick = () => {
+        if (!esMiTurno || !esCasillaOscura) return;
+
+        if (contenidoFicha === miColorFicha) {
+          fichaSeleccionada = { r, c };
+          renderizarTableroDamas(estado, chatId, miNombre);
+        } 
+        else if (fichaSeleccionada && contenidoFicha === '') {
+          moverFicha(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
+          fichaSeleccionada = null;
+        }
+      };
+
+      grid.appendChild(cell);
     }
   }
 }
 
-async function manejarClickCasillero(fila, col, estado, chatId, miNombre, miColor) {
-  if (estado.ganador) return;
-  if (estado.turno.toLowerCase() !== miNombre.toLowerCase()) {
-    alert("No es tu turno.");
-    return;
-  }
+async function moverFicha(estado, desde, hasta, chatId, miNombre) {
+  const nuevasFichas = estado.fichas.map(row => [...row]);
+  const colorFicha = nuevasFichas[desde.r][desde.c];
 
-  const casilleroContenido = estado.fichas[fila][col];
+  nuevasFichas[desde.r][desde.c] = '';
+  nuevasFichas[hasta.r][hasta.c] = colorFicha;
 
-  if (casilleroContenido !== '' && casilleroContenido.charAt(0) === miColor) {
-    fichaSeleccionada = { fila, col };
-    renderizarTableroDamas(estado, chatId, miNombre);
-    return;
-  }
+  const otroJugador = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase() 
+    ? estado.jugadorRojo 
+    : estado.jugadorBlanco;
 
-  if (fichaSeleccionada) {
-    const origenFila = fichaSeleccionada.fila;
-    const origenCol = fichaSeleccionada.col;
-
-    if (casilleroContenido === '') {
-      const deltaFila = fila - origenFila;
-      const deltaCol = Math.abs(col - origenCol);
-      const fichaActual = estado.fichas[origenFila][origenCol];
-      const esReina = fichaActual.includes("K");
-
-      const direccionPermitida = miColor === 'B' ? -1 : 1;
-      let esMovimientoValido = false;
-      let filaCapturada = -1;
-      let colCapturada = -1;
-
-      if (deltaCol === 1 && (esReina ? Math.abs(deltaFila) === 1 : deltaFila === direccionPermitida)) {
-        esMovimientoValido = true;
-      } 
-      else if (deltaCol === 2 && (esReina ? Math.abs(deltaFila) === 2 : deltaFila === 2 * direccionPermitida)) {
-        filaCapturada = origenFila + deltaFila / 2;
-        colCapturada = origenCol + (col - origenCol) / 2;
-        const fichaIntermedia = estado.fichas[filaCapturada][colCapturada];
-
-        if (fichaIntermedia !== '' && fichaIntermedia.charAt(0) !== miColor) {
-          esMovimientoValido = true;
-        }
-      }
-
-      if (esMovimientoValido) {
-        const nuevasFichas = estado.fichas.map(f => [...f]);
-        nuevasFichas[origenFila][origenCol] = '';
-
-        if (filaCapturada !== -1 && colCapturada !== -1) {
-          nuevasFichas[filaCapturada][colCapturada] = '';
-        }
-
-        let nuevaFichaVal = fichaActual;
-        if ((miColor === 'B' && fila === 0) || (miColor === 'R' && fila === 7)) {
-          nuevaFichaVal = miColor + 'K';
-        }
-        nuevasFichas[fila][col] = nuevaFichaVal;
-
-        const rivalColor = miColor === 'B' ? 'R' : 'B';
-        let leQuedanFichasRival = false;
-
-        for (let r = 0; r < 8; r++) {
-          for (let c = 0; c < 8; c++) {
-            if (nuevasFichas[r][c].charAt(0) === rivalColor) {
-              leQuedanFichasRival = true;
-              break;
-            }
-          }
-        }
-
-        const siguienteTurno = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase() ? estado.jugadorRojo : estado.jugadorBlanco;
-        fichaSeleccionada = null;
-
-        await update(ref(db, `chats/${chatId}/damas`), {
-          fichas: nuevasFichas,
-          turno: siguienteTurno,
-          ganador: leQuedanFichasRival ? '' : miNombre
-        });
-      }
-    }
-  }
+  await update(ref(db, `chats/${chatId}/damas`), {
+    ...estado,
+    turno: otroJugador,
+    fichas: nuevasFichas
+  });
 }
 
-// 10. EXPONER FUNCIONES AL ÁMBITO GLOBAL (GLOBAL SCOPE / WINDOW)
-// Este paso es crucial cuando trabajas con type="module" y eventos HTML onClick.
-window.mostrarSeccion = mostrarSeccion;
-window.guardarYEmparejar = guardarYEmparejar;
-window.accederBuzon = accederBuzon;
-window.cargarListaChats = cargarListaChats;
-window.iniciarOCargarChat = iniciarOCargarChat;
-window.abrirSalaChat = abrirSalaChat;
-window.cerrarSesion = cerrarSesion;
-window.inicializarJuegoDamas = inicializarJuegoDamas;
+// 7. GESTIÓN DE VISTAS Y AUTOLOGIN
+window.mostrarSeccion = function(id) {
+  ocultarSecciones();
+  document.getElementById(id).classList.remove("hidden");
+};
 
-// Inicialización de la vista
+function ocultarSecciones() {
+  if (refChatActiva && listenerChatActivo) {
+    off(refChatActiva, "value", listenerChatActivo);
+    listenerChatActivo = null;
+    refChatActiva = null;
+  }
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
+    listenerDamasActivo = null;
+    refDamasActiva = null;
+  }
+  ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
+
+  const sesionGuardada = localStorage.getItem("sesion_usuario");
+  if (sesionGuardada) {
+    try {
+      const datosSesion = JSON.parse(sesionGuardada);
+      if (datosSesion.nombre) {
+        usuarioActualGlobal = datosSesion.nombre;
+        window.cargarListaChats(datosSesion.nombre);
+      }
+    } catch (e) {
+      console.error("Error al recuperar sesión", e);
+    }
+  }
+
+  const btnQuiz = document.getElementById("btn-ir-quiz");
+  if (btnQuiz) {
+    btnQuiz.addEventListener("click", () => {
+      const sesion = localStorage.getItem("sesion_usuario");
+      if (sesion) {
+        alert("⚠️ Ya has completado el formulario anteriormente. Te redirigimos a tu buzón.");
+        const datos = JSON.parse(sesion);
+        window.cargarListaChats(datos.nombre);
+      } else {
+        window.mostrarSeccion("quiz-section");
+      }
+    });
+  }
+
+  const btnLogin = document.getElementById("btn-ir-login");
+  if (btnLogin) btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
+
+  const btnEntrarBuzon = document.getElementById("btn-entrar-buzon");
+  if (btnEntrarBuzon) btnEntrarBuzon.addEventListener("click", () => window.accederBuzon());
+
+  const btnVolver = document.getElementById("btn-volver-selector");
+  if (btnVolver) btnVolver.addEventListener("click", () => window.mostrarSeccion("mode-selector"));
 });
