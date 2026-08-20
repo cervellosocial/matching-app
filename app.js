@@ -477,7 +477,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
           <li>Respeto mutuo y consentimiento en todo momento.</li>
           <li>El ganador de las damas asigna un rol o penitencia al perdedor.</li>
           <li>Estableced una palabra clave de seguridad antes de empezar.</li>
-          <li>Escribe aquí cualquier otra regla personalizada...</li>
         </ul>
         <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
           ♟️ Abrir / Ocultar Tablero de Damas
@@ -512,7 +511,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
       <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" />
-      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;">Enviar mensaje</button>
+      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #db2777 !important; color: #ffffff !important; border: none !important;">Enviar mensaje</button>
     </div>
   `;
 
