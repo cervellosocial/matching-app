@@ -512,7 +512,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       </div>
     </div>
     
-    <!-- FONDO DEL CHAT CAMBIADO A #252525 -->
+    <!-- FONDO DEL CHAT EN #252525 -->
     <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #252525 !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #9ca3af;">Cargando mensajes...</p>
     </div>
@@ -563,15 +563,15 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
         
-        // COLORES DE BURBUJAS ADAPTADOS AL FONDO #252525
-        const fondoBurbuja = esMio ? "#831843" : "#334155"; 
-        const colorTexto = "#ffffff";
+        // COLORES SOLICITADOS PARA LOS BOCADILLOS
+        const fondoBurbuja = esMio ? "#1c1c1c" : "#3d3d3d"; 
+        const bordeBurbuja = esMio ? "#333333" : "#555555";
 
         return `
           <div style="${alineacion} margin-bottom: 10px;">
-            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #475569; max-width: 85%; text-align: left;">
-              <small style="color: #cbd5e1 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
-              <span style="font-size: 15px !important; color: ${colorTexto} !important; font-weight: 500 !important;">${m.texto}</span>
+            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid ${bordeBurbuja}; max-width: 85%; text-align: left;">
+              <small style="color: #9ca3af !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
+              <span style="font-size: 15px !important; color: #ffffff !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
