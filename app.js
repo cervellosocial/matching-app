@@ -115,14 +115,18 @@ window.guardarYEmparejar = async function() {
       });
     }
 
+    // SI EL USUARIO YA EXISTE, NO PERMITIR REPETIR
     if (usuarioExistente) {
-      if (usuarioExistente.pin !== pin) return alert("PIN incorrecto.");
+      if (usuarioExistente.pin !== pin) {
+        alert("Este nombre ya está registrado con otro PIN. Usa el PIN correcto o elige otro nombre.");
+        return;
+      }
       
+      alert("⚠️ Ya has completado este formulario previamente. No es posible repetirlo.");
       usuarioActualGlobal = usuarioExistente.nombre;
       localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: usuarioExistente.nombre, pin }));
       
-      const resultados = calcularEmparejamientos(usuarioExistente, otrosUsuarios);
-      mostrarResultados(resultados, usuarioExistente.nombre);
+      await window.cargarListaChats(usuarioExistente.nombre);
       return;
     }
 
@@ -319,7 +323,6 @@ window.cargarListaChats = async function(miNombre) {
       });
     }
 
-    // Combinar usuarios para asegurar que los chats activos NUNCA desaparezcan
     const mapaFinalConexiones = new Map();
 
     resultadosAfinidad.forEach(r => {
@@ -345,12 +348,18 @@ window.cargarListaChats = async function(miNombre) {
     const listaFinal = Array.from(mapaFinalConexiones.values());
 
     if (listaFinal.length === 0) {
-      list.innerHTML = "<p style='color: #ffffff;'>Aún no tienes conexiones registradas.</p>";
+      list.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+          <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
+          <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
+        </div>
+        <p style='color: #ffffff;'>Aún no tienes conexiones o personas en tu rango de edad.</p>
+      `;
       return;
     }
 
     let htmlOutput = `
-      <div style="display:flex; justify-between; align-items:center; margin-bottom: 15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
         <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
         <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
       </div>
@@ -476,7 +485,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       />
       <button 
         id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #7e0202 !important; color: #ffffff !important; border: none !important;"
       >
         Enviar mensaje
       </button>
@@ -697,7 +706,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const btnQuiz = document.getElementById("btn-ir-quiz");
-  if (btnQuiz) btnQuiz.addEventListener("click", () => window.mostrarSeccion("quiz-section"));
+  if (btnQuiz) {
+    btnQuiz.addEventListener("click", () => {
+      const sesion = localStorage.getItem("sesion_usuario");
+      if (sesion) {
+        alert("⚠️ Ya has completado el formulario anteriormente. Te redirigimos a tu buzón.");
+        const datos = JSON.parse(sesion);
+        window.cargarListaChats(datos.nombre);
+      } else {
+        window.mostrarSeccion("quiz-section");
+      }
+    });
+  }
 
   const btnLogin = document.getElementById("btn-ir-login");
   if (btnLogin) btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
