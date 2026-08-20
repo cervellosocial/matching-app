@@ -512,8 +512,9 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       </div>
     </div>
     
-    <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
-      <p style="color: #374151;">Cargando mensajes...</p>
+    <!-- FONDO DEL CHAT CAMBIADO A #252525 -->
+    <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #252525 !important; margin-bottom: 12px; text-align: left;">
+      <p style="color: #9ca3af;">Cargando mensajes...</p>
     </div>
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
@@ -521,7 +522,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
         type="text" 
         id="chat-input" 
         placeholder="Escribe tu mensaje aquí..." 
-        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important;" 
+        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; border-radius: 6px !important; box-sizing: border-box !important;" 
       />
       <button 
         id="btn-send-msg" 
@@ -561,13 +562,16 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       box.innerHTML = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
-        const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
+        
+        // COLORES DE BURBUJAS ADAPTADOS AL FONDO #252525
+        const fondoBurbuja = esMio ? "#831843" : "#334155"; 
+        const colorTexto = "#ffffff";
 
         return `
           <div style="${alineacion} margin-bottom: 10px;">
-            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; max-width: 85%; text-align: left;">
-              <small style="color: #000000 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
-              <span style="font-size: 15px !important; color: #000000 !important; font-weight: 500 !important;">${m.texto}</span>
+            <div style="display: inline-block; background: ${fondoBurbuja} !important; padding: 10px 14px; border-radius: 12px; border: 1px solid #475569; max-width: 85%; text-align: left;">
+              <small style="color: #cbd5e1 !important; font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 2px;">${m.de}</small>
+              <span style="font-size: 15px !important; color: ${colorTexto} !important; font-weight: 500 !important;">${m.texto}</span>
             </div>
           </div>
         `;
@@ -575,7 +579,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
       box.scrollTop = box.scrollHeight;
     } else {
-      box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
+      box.innerHTML = "<p style='color: #9ca3af;'>No hay mensajes aún.</p>";
     }
   });
 
