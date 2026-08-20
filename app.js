@@ -50,7 +50,8 @@ const preguntas = [
   { id: "q4", texto: "¿Te gusta la humillación suave?", opA: "Sí 😳", opB: "No 🚫", regla: "igual" },
   { id: "q5", texto: "¿Prefieres 24/7 o sesiones puntuales?", opA: "24/7 ⏰", opB: "Sesiones puntuales 📅", regla: "igual" },
   { id: "q6", texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", opA: "Sí 🗳️", opB: "No 🚫", regla: "igual" },
-  { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } }
+  { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } },
+  { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria / Rompehielos", opB: "📜 Reglas de comportamiento y juegos", regla: "igual" }
 ];
 
 function obtenerChatId(user1, user2) {
@@ -185,10 +186,15 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeMatch = comparables > 0 ? Math.round((aciertos / comparables) * 100) : 0;
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
-      // FILTRO AJUSTADO AL 90%
+      // Determinación de tipo de chat: Prevalece 'aleatorio' si no coinciden ambos en 'B' (reglas)
+      const miPref = usuarioActual.respuestas ? usuarioActual.respuestas["q_chat_pref"] : "A";
+      const suPref = u.respuestas ? u.respuestas["q_chat_pref"] : "A";
+      const tipoChat = (miPref === "B" && suPref === "B") ? "reglas" : "aleatorio";
+
       return { 
         nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
-        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
+        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90,
+        tipoChat: tipoChat
       };
     })
     .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
@@ -236,7 +242,7 @@ function mostrarResultados(resultados, miNombre) {
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
+      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat);
     }
   });
 }
@@ -317,7 +323,8 @@ window.cargarListaChats = async function(miNombre) {
           chatsExistentes[otroNombre.toLowerCase()] = {
             chatId,
             ultimoMsg: chat.ultimoMensaje || "",
-            porcentaje: chat.porcentaje || ""
+            porcentaje: chat.porcentaje || "",
+            tipoChat: chat.tipoChat || "aleatorio"
           };
         }
       });
@@ -325,14 +332,12 @@ window.cargarListaChats = async function(miNombre) {
 
     const mapaFinalConexiones = new Map();
 
-    // Solo se añaden automáticamente los que cumplan la condición del 90%
     resultadosAfinidad.forEach(r => {
       if (r.esMatch || r.esGilicrush) {
         mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
       }
     });
 
-    // Mantener los chats que ya han sido iniciados previamente
     Object.keys(chatsExistentes).forEach(nombreOtro => {
       if (!mapaFinalConexiones.has(nombreOtro)) {
         const usuarioEncontrado = otrosUsuarios.find(u => u.nombre.toLowerCase() === nombreOtro);
@@ -342,7 +347,8 @@ window.cargarListaChats = async function(miNombre) {
           porcentajeMatch: 50,
           porcentajeGilicrush: 50,
           esMatch: true,
-          esGilicrush: false
+          esGilicrush: false,
+          tipoChat: chatsExistentes[nombreOtro].tipoChat
         });
       }
     });
@@ -381,13 +387,13 @@ window.cargarListaChats = async function(miNombre) {
             <p><b>Afinidad:</b> ${textoPorcentaje}</p>
           </div>
           ${chatIniciado ? `
-            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p> 
+            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p>
             <button id="btn-buzon-chat-${index}" style="background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Continuar Conversación
             </button>
           ` : `
             <p style="color: #bbb; font-size: 0.85em; margin: 8px 0;"><i>Aún no habéis hablado. ¡Inicia la conversación!</i></p>
-            <button id="btn-buzon-chat-${index}" style="background: #52525e; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button id="btn-buzon-chat-${index}" style="background: #db2777; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Iniciar Chat
             </button>
           `}
@@ -405,7 +411,7 @@ window.cargarListaChats = async function(miNombre) {
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat);
       }
     });
 
@@ -421,7 +427,7 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
-window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText) {
+window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText, tipoChat = "aleatorio") {
   try {
     const chatId = obtenerChatId(miNombre, otroNombre);
     const chatRef = ref(db, `chats/${chatId}`);
@@ -431,6 +437,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
         porcentaje: porcentajeText,
+        tipoChat: tipoChat,
         ultimoMensaje: primerMensaje,
         fecha: Date.now()
       });
@@ -440,16 +447,19 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
         texto: primerMensaje,
         fecha: Date.now()
       });
+    } else {
+      const datosChat = snapshot.val();
+      if (datosChat.tipoChat) tipoChat = datosChat.tipoChat;
     }
 
-    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat);
   } catch (e) {
     console.error("Error al crear/iniciar chat:", e);
     alert("Ocurrió un error al abrir la sala de chat.");
   }
 };
 
-window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
+window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat = "aleatorio") {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -457,40 +467,52 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
   const chatId = obtenerChatId(miNombre, otroNombre);
 
+  let cabeceraEspecial = "";
+
+  if (tipoChat === "reglas") {
+    cabeceraEspecial = `
+      <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
+        <h4 style="color: #f59e0b; margin-top:0;">📜 Reglas de Comportamiento y Juego de Roles</h4>
+        <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
+          <li>Respeto mutuo y consentimiento en todo momento.</li>
+          <li>El ganador de las damas asigna un rol o penitencia al perdedor.</li>
+          <li>Estableced una palabra clave de seguridad antes de empezar.</li>
+          <li>Escribe aquí cualquier otra regla personalizada...</li>
+        </ul>
+        <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
+          ♟️ Abrir / Ocultar Tablero de Damas
+        </button>
+        <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px;">
+          <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
+          <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
+        </div>
+      </div>
+    `;
+  } else {
+    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
+    cabeceraEspecial = `
+      <div style="margin-bottom: 12px; background: #831843; padding: 12px; border-radius: 8px; border: 1px solid #be185d; text-align: left;">
+        <p style="color: #fbcfe8; margin: 0; font-size: 0.85em;"><b>🎲 Pregunta Rompehielos del Chat:</b></p>
+        <p style="color: #ffffff; margin: 5px 0 0 0; font-style: italic;">"${preguntaElegida}"</p>
+      </div>
+    `;
+  }
+
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
       <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
-    <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
-        ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
-      </button>
-      
-      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
-        <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
-        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
-      </div>
-    </div>
+    ${cabeceraEspecial}
     
     <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #374151;">Cargando mensajes...</p>
     </div>
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
-      <input 
-        type="text" 
-        id="chat-input" 
-        placeholder="Escribe tu mensaje aquí..." 
-        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" 
-      />
-      <button 
-        id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
-      >
-        Enviar mensaje
-      </button>
+      <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" />
+      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;">Enviar mensaje</button>
     </div>
   `;
 
@@ -549,7 +571,9 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   btnSend.onclick = enviar;
   inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
+  if (tipoChat === "reglas") {
+    window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
+  }
 };
 
 // 6. DAMAS
