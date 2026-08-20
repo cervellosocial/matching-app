@@ -41,6 +41,16 @@ const preguntas = [
   { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria / Rompehielos", opB: "📜 Reglas de comportamiento y juegos", regla: "igual" }
 ];
 
+const preguntasRompehielos = [
+  "¿Cuál es tu lugar favorito para una cita informal?",
+  "¿Qué hobby te apasiona pero pocas personas conocen?",
+  "¿Prefieres una película en casa o una salida espontánea?",
+  "¿Qué es lo más divertido o extraño que te ha pasado esta semana?",
+  "¿Si pudieras viajar a cualquier lugar mañana mismo, a dónde irías?",
+  "¿Qué canción no puedes dejar de escuchar últimamente?",
+  "¿Eres más de madrugar o de trasnochar?"
+];
+
 function obtenerChatId(user1, user2) {
   return [user1.toLowerCase(), user2.toLowerCase()].sort().join("_");
 }
@@ -110,7 +120,7 @@ window.guardarYEmparejar = async function() {
   const minEdadInput = document.getElementById("min-age");
   const maxEdadInput = document.getElementById("max-age");
 
-  if (!nombreInput || !pinInput) return alert("Error interno: Faltan inputs del formulario en tu HTML.");
+  if (!nombreInput || !pinInput) return alert("Error interno: Faltan inputs del formulario.");
 
   const nombre = nombreInput.value.trim();
   const pin = pinInput.value.trim();
@@ -458,6 +468,18 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
+window.enviarPreguntaAleatoria = async function(chatId, miNombre) {
+  const preguntaRandom = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
+  const textoEnviar = `🎲 Pregunta para romper el hielo: "${preguntaRandom}"`;
+
+  try {
+    await push(ref(db, `chats/${chatId}/mensajes`), { de: miNombre, texto: textoEnviar, fecha: Date.now() });
+    await update(ref(db, `chats/${chatId}`), { ultimoMensaje: textoEnviar, fecha: Date.now() });
+  } catch (e) {
+    console.error("Error al enviar pregunta aleatoria:", e);
+  }
+};
+
 window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
@@ -473,7 +495,10 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
-    <div style="margin-bottom: 12px; text-align: center;">
+    <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-direction: column;">
+      <button id="btn-rompehielos" type="button" style="background: #eab308; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        🎲 Enviar Pregunta Aleatoria (Rompehielos)
+      </button>
       <button id="btn-toggle-juego" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
         ⚪ Abrir / Ocultar 4 en Raya
       </button>
@@ -512,6 +537,11 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     const container = document.getElementById("juego-board-container");
     if (btnToggle && container) {
       btnToggle.onclick = () => container.classList.toggle("hidden");
+    }
+
+    const btnRompehielos = document.getElementById("btn-rompehielos");
+    if (btnRompehielos) {
+      btnRompehielos.onclick = () => window.enviarPreguntaAleatoria(chatId, miNombre);
     }
   }, 50);
 
@@ -778,17 +808,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btnVolver = document.getElementById("btn-volver-selector");
   if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
-
-  const sesionGuardada = localStorage.getItem("sesion_usuario");
-  if (sesionGuardada) {
-    try {
-      const { nombre } = JSON.parse(sesionGuardada);
-      if (nombre) {
-        usuarioActualGlobal = nombre;
-        window.cargarListaChats(nombre);
-      }
-    } catch (e) {
-      console.error("Error al autorecuperar la sesión:", e);
-    }
-  }
 });
