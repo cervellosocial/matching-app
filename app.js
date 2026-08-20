@@ -417,7 +417,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
     <!-- BOTÓN Y CONTENEDOR DEL JUEGO DE DAMAS -->
     <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" style="background: #131313; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 1px #bcbaba;">
+      <button id="btn-toggle-damas" style="background: #131313; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.3px #bcbaba;">
         ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
       </button>
       
