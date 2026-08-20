@@ -553,11 +553,14 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
     console.error("Error leyendo info del chat:", e);
   }
 
+  // REGLAS FORMATEADAS PARA INCRUSTAR DENTRO DEL CHAT (MODO SISTEMA)
   let htmlNormasBlock = "";
   if (tipoChat === "protocolar" && normaAsignada) {
+    const textoLimpio = normaAsignada.replace(/\*\*/g, ''); // Quita asteriscos de Markdown
     htmlNormasBlock = `
-      <div style="background: #1e293b; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: left; color: #f8fafc; font-size: 13px; line-height: 1.4;">
-        ${normaAsignada.replace(/\n/g, '<br>')}
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; color: #1e3a8a; font-size: 13px; line-height: 1.4;">
+        <b style="display:block; margin-bottom:4px; font-size:14px;">📌 Normas de la sala:</b>
+        ${textoLimpio.replace(/\n/g, '<br>')}
       </div>
     `;
   }
@@ -570,8 +573,6 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
         <small style="color: #ccc;">(${porcentajeText} - Modo: ${tipoChat === 'protocolar' ? '📜 Protocolar' : '🎲 Rompehielos'})</small>
       </h3>
     </div>
-
-    ${htmlNormasBlock}
 
     <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-direction: column;">
       <button id="btn-rompehielos" type="button" style="background: #eab308; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
@@ -590,7 +591,8 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
       </div>
     </div>
     
-    <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
+    <!-- CONTENEDOR BLANCO DE MENSAJES -->
+    <div id="chat-messages-box" style="height: 320px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #374151;">Cargando mensajes...</p>
     </div>
     
@@ -632,11 +634,13 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
     const box = document.getElementById("chat-messages-box");
     if (!box) return;
 
+    let htmlMensajes = "";
+
     if (snapshot.exists()) {
       const msgsObj = snapshot.val();
       const msgsArray = Object.values(msgsObj);
 
-      box.innerHTML = msgsArray.map(m => {
+      htmlMensajes = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
         const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
@@ -650,11 +654,13 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
           </div>
         `;
       }).join('');
-
-      box.scrollTop = box.scrollHeight;
     } else {
-      box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
+      htmlMensajes = "<p style='color: #6b7280; font-size:14px; text-align:center;'>No hay mensajes aún.</p>";
     }
+
+    // LAS REGLAS SE RENDERIZAN SIEMPRE PRIMERO EN LA CAJA BLANCA DE CHAT
+    box.innerHTML = htmlNormasBlock + htmlMensajes;
+    box.scrollTop = box.scrollHeight;
   });
 
   const btnSend = document.getElementById("btn-send-msg");
@@ -679,7 +685,6 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
 
   window.inicializarJuegoCuatroEnRaya(chatId, miNombre, otroNombre);
 };
-
 // 6. JUEGO DE 4 EN RAYA (CUADRÍCULA 7x7)
 
 function obtenerTableroCuatroEnRayaInicial(jugador1, jugador2) {
