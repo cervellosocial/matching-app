@@ -1,3 +1,8 @@
+Aquí tienes el código completo con el juego de **4 en Raya** implementado (cuadrícula de $7 \times 7$ sobre fondo blanco, turnos alternados entre **negro** y **granate**, detección automática de victoria en horizontal, vertical o diagonal, y botón de reinicio).
+
+Puedes reemplazar completamente el contenido de tu archivo en GitHub con este código:
+
+```javascript
 // 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -21,12 +26,11 @@ const auth = getAuth(app);
 
 let listenerChatActivo = null; 
 let refChatActiva = null;
-let listenerDamasActivo = null;
-let refDamasActiva = null;
+let listenerJuegoActivo = null;
+let refJuegoActiva = null;
 let usuarioActualGlobal = null;
-let fichaSeleccionada = null;
 
-signInAnonymously(auth)
+const authPromise = signInAnonymously(auth)
   .then(() => console.log("Sesión anónima iniciada"))
   .catch((e) => console.error("Error Auth:", e));
 
@@ -93,10 +97,10 @@ function ocultarSecciones() {
     listenerChatActivo = null;
     refChatActiva = null;
   }
-  if (refDamasActiva && listenerDamasActivo) {
-    off(refDamasActiva, "value", listenerDamasActivo);
-    listenerDamasActivo = null;
-    refDamasActiva = null;
+  if (refJuegoActiva && listenerJuegoActivo) {
+    off(refJuegoActiva, "value", listenerJuegoActivo);
+    listenerJuegoActivo = null;
+    refJuegoActiva = null;
   }
   ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
     const el = document.getElementById(id);
@@ -105,6 +109,7 @@ function ocultarSecciones() {
 }
 
 window.guardarYEmparejar = async function() {
+  await authPromise;
   const nombreInput = document.getElementById("username");
   const pinInput = document.getElementById("user-pin");
   const edadInput = document.getElementById("user-age");
@@ -266,6 +271,7 @@ function mostrarResultados(resultados, miNombre) {
 }
 
 window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
+  await authPromise;
   const chatId = obtenerChatId(miNombre, otroNombre);
   try {
     const chatRef = ref(db, `chats/${chatId}`);
@@ -285,6 +291,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial,
 };
 
 window.accederBuzon = async function() {
+  await authPromise;
   const nombreInput = document.getElementById("login-name");
   const pinInput = document.getElementById("login-pin");
 
@@ -320,6 +327,7 @@ window.accederBuzon = async function() {
 };
 
 window.cargarListaChats = async function(miNombre) {
+  await authPromise;
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -424,7 +432,7 @@ window.cargarListaChats = async function(miNombre) {
             <button id="btn-buzon-chat-${index}" style="background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Continuar Conversación
             </button>
-          ` : `
+          ` : ` 
             <p style="color: #bbb; font-size: 0.85em; margin: 8px 0;"><i>Aún no habéis hablado. ¡Inicia la conversación!</i></p>
             <button id="btn-buzon-chat-${index}" style="background: #db2777; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Iniciar Chat
@@ -475,13 +483,16 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     </div>
 
     <div style="margin-bottom: 12px; text-align: center;">
-      <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        ♟️ Abrir / Ocultar Juego de Damas. El perdedor obederá al ganador
+      <button id="btn-toggle-juego" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        ⚪ Abrir / Ocultar 4 en Raya
       </button>
       
-      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
-        <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
-        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
+      <div id="juego-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
+        <p id="juego-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
+        <div id="juego-grid" style="display: grid; grid-template-columns: repeat(7, 40px); grid-template-rows: repeat(7, 40px); gap: 2px; justify-content: center; background-color: #ffffff; padding: 6px; border-radius: 6px;"></div>
+        <button id="btn-reiniciar-juego" style="margin-top: 12px; background: #dc2626; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+          🔄 Reiniciar Juego
+        </button>
       </div>
     </div>
     
@@ -506,8 +517,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   `;
 
   setTimeout(() => {
-    const btnToggle = document.getElementById("btn-toggle-damas");
-    const container = document.getElementById("damas-board-container");
+    const btnToggle = document.getElementById("btn-toggle-juego");
+    const container = document.getElementById("juego-board-container");
     if (btnToggle && container) {
       btnToggle.onclick = () => container.classList.toggle("hidden");
     }
@@ -567,85 +578,84 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
+  window.inicializarJuegoCuatroEnRaya(chatId, miNombre, otroNombre);
 };
 
-// 6. JUEGO DE DAMAS (CON REGLAS, CAPTURA Y FIN DE JUEGO)
+// 6. JUEGO DE 4 EN RAYA (CUADRÍCULA 7x7)
 
-// 6. JUEGO DE DAMAS (OPTIMIZADO, CON INDICADORES Y REGLAS EXACTAS)
-
-function obtenerTableroInicial(jugador1, jugador2) {
+function obtenerTableroCuatroEnRayaInicial(jugador1, jugador2) {
+  const tablero = [];
+  for (let r = 0; r < 7; r++) {
+    tablero[r] = [];
+    for (let c = 0; c < 7; c++) {
+      tablero[r][c] = '';
+    }
+  }
+  
   return {
     turno: jugador1,
-    jugadorBlanco: jugador1,
-    jugadorRojo: jugador2,
+    jugadorNegro: jugador1,
+    jugadorGranate: jugador2,
     ganador: '',
-    fichas: [
-      ['', 'R', '', 'R', '', 'R'],
-      ['R', '', 'R', '', 'R', ''],
-      ['', '', '', '', '', ''],
-      ['', '', '', '', '', ''],
-      ['', 'B', '', 'B', '', 'B'],
-      ['B', '', 'B', '', 'B', '']
-    ]
+    fichas: tablero
   };
 }
 
-window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
-  // Desactivar cualquier listener previo para evitar ralentización
-  if (refDamasActiva) {
-    off(refDamasActiva);
-    refDamasActiva = null;
-    listenerDamasActivo = null;
+window.inicializarJuegoCuatroEnRaya = function(chatId, miNombre, otroNombre) {
+  if (refJuegoActiva) {
+    off(refJuegoActiva);
+    refJuegoActiva = null;
+    listenerJuegoActivo = null;
   }
 
-  fichaSeleccionada = null; // Reiniciar selección local
-  const damasRef = ref(db, `chats/${chatId}/damas`);
-  refDamasActiva = damasRef;
+  const juegoRef = ref(db, `chats/${chatId}/cuatroEnRaya`);
+  refJuegoActiva = juegoRef;
 
-  listenerDamasActivo = onValue(damasRef, (snapshot) => {
-    let estadoDamas = snapshot.val();
-    if (!estadoDamas) {
-      estadoDamas = obtenerTableroInicial(miNombre, otroNombre);
-      update(damasRef, estadoDamas);
+  listenerJuegoActivo = onValue(juegoRef, (snapshot) => {
+    let estadoJuego = snapshot.val();
+    if (!estadoJuego) {
+      estadoJuego = obtenerTableroCuatroEnRayaInicial(miNombre, otroNombre);
+      update(juegoRef, estadoJuego);
       return;
     }
-    renderizarTableroDamas(estadoDamas, chatId, miNombre);
+    renderizarTableroCuatroEnRaya(estadoJuego, chatId, miNombre);
   });
 };
 
-function renderizarTableroDamas(estado, chatId, miNombre) {
-  const grid = document.getElementById("damas-grid");
-  const turnInfo = document.getElementById("damas-turn-info");
+function renderizarTableroCuatroEnRaya(estado, chatId, miNombre) {
+  const grid = document.getElementById("juego-grid");
+  const turnInfo = document.getElementById("juego-turn-info");
+  const btnReiniciar = document.getElementById("btn-reiniciar-juego");
   if (!grid || !turnInfo) return;
 
+  if (btnReiniciar) {
+    btnReiniciar.onclick = async () => {
+      const nuevoJuego = obtenerTableroCuatroEnRayaInicial(estado.jugadorNegro, estado.jugadorGranate);
+      await update(ref(db, `chats/${chatId}/cuatroEnRaya`), nuevoJuego);
+    };
+  }
+
   if (estado.ganador) {
-    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador: <b>${estado.ganador}</b></span>`;
+    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 16px;">🏆 ¡FIN DEL JUEGO! Ganador: <b>${estado.ganador}</b></span>`;
   } else {
     const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-    const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-    const miColorFicha = soyBlanco ? 'B' : 'R';
+    const soyNegro = estado.jugadorNegro.toLowerCase() === miNombre.toLowerCase();
+    const miColor = soyNegro ? '⚫ Negro' : '🔴 Granate';
 
     turnInfo.innerHTML = esMiTurno 
-      ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
+      ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColor})</span>` 
       : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
   }
 
   grid.innerHTML = "";
+  grid.style.gridTemplateColumns = "repeat(7, 40px)";
+  grid.style.gridTemplateRows = "repeat(7, 40px)";
+  
   const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-  const miColorFicha = soyBlanco ? 'B' : 'R';
 
-  // Obtener movimientos válidos si hay una ficha seleccionada
-  let destinosValidos = [];
-  if (fichaSeleccionada && esMiTurno && !estado.ganador) {
-    destinosValidos = calcularDestinosValidos(estado, fichaSeleccionada, miNombre);
-  }
-
-  for (let r = 0; r < 6; r++) {
-    for (let c = 0; c < 6; c++) {
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < 7; c++) {
       const cell = document.createElement("div");
-      const esCasillaOscura = (r + c) % 2 !== 0;
       const contenidoFicha = estado.fichas[r][c];
 
       cell.style.width = "40px";
@@ -653,42 +663,20 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
       cell.style.display = "flex";
       cell.style.alignItems = "center";
       cell.style.justifyContent = "center";
-      cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
-      cell.style.position = "relative";
+      cell.style.backgroundColor = "#ffffff";
+      cell.style.border = "1px solid #cbd5e1";
       cell.style.boxSizing = "border-box";
+      cell.style.cursor = (esMiTurno && !estado.ganador && contenidoFicha === '') ? "pointer" : "default";
 
-      // Resaltar ficha seleccionada
-      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
-        cell.style.border = "3px solid #f59e0b";
-      }
-
-      // Resaltar destinos posibles (verdes)
-      const esDestinoValido = destinosValidos.some(d => d.r === r && d.c === c);
-      if (esDestinoValido) {
-        cell.style.backgroundColor = "#15803d"; // Verde
-        cell.style.cursor = "pointer";
-      }
-
-      // Dibujar fichas
-      if (contenidoFicha === 'B') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
-      } else if (contenidoFicha === 'R') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
+      if (contenidoFicha === 'N') {
+        cell.innerHTML = "<div style='width:28px; height:28px; border-radius:50%; background:#000000; border:1px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'></div>";
+      } else if (contenidoFicha === 'G') {
+        cell.innerHTML = "<div style='width:28px; height:28px; border-radius:50%; background:#800020; border:1px solid #4a0013; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'></div>";
       }
 
       cell.onclick = () => {
-        if (estado.ganador || !esMiTurno || !esCasillaOscura) return;
-
-        // Seleccionar propia ficha
-        if (contenidoFicha === miColorFicha) {
-          fichaSeleccionada = { r, c };
-          renderizarTableroDamas(estado, chatId, miNombre);
-        } 
-        // Mover a destino válido
-        else if (fichaSeleccionada && esDestinoValido) {
-          ejecutarMovimiento(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
-          fichaSeleccionada = null;
-        }
+        if (estado.ganador || !esMiTurno || contenidoFicha !== '') return;
+        marcarCasilla(estado, { r, c }, chatId, miNombre);
       };
 
       grid.appendChild(cell);
@@ -696,80 +684,92 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   }
 }
 
-function calcularDestinosValidos(estado, desde, miNombre) {
-  const destinos = [];
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-  const dirR = soyBlanco ? -1 : 1; // Blancas suben (-1), Rojas bajan (+1)
-  const colorEnemigo = soyBlanco ? 'R' : 'B';
+async function marcarCasilla(estado, posicion, chatId, miNombre) {
+  const nuevasFichas = estado.fichas.map(row => [...row]);
+  const soyNegro = estado.jugadorNegro.toLowerCase() === miNombre.toLowerCase();
+  const miColorFicha = soyNegro ? 'N' : 'G';
+  
+  nuevasFichas[posicion.r][posicion.c] = miColorFicha;
 
-  const posiblesPasos = [
-    // Movimiento normal (1 casilla diagonal adelante)
-    { r: desde.r + dirR, c: desde.c - 1, esCaptura: false },
-    { r: desde.r + dirR, c: desde.c + 1, esCaptura: false },
-    // Captura (2 casillas diagonal adelante)
-    { r: desde.r + (dirR * 2), c: desde.c - 2, esCaptura: true, midR: desde.r + dirR, midC: desde.c - 1 },
-    { r: desde.r + (dirR * 2), c: desde.c + 2, esCaptura: true, midR: desde.r + dirR, midC: desde.c + 1 }
-  ];
-
-  posiblesPasos.forEach(p => {
-    // Validar limites del tablero 6x6
-    if (p.r >= 0 && p.r < 6 && p.c >= 0 && p.c < 6) {
-      if (estado.fichas[p.r][p.c] === '') { // Destino libre
-        if (!p.esCaptura) {
-          destinos.push({ r: p.r, c: p.c });
-        } else if (estado.fichas[p.midR][p.midC] === colorEnemigo) { // Hay enemigo para comer
-          destinos.push({ r: p.r, c: p.c, esCaptura: true, midR: p.midR, midC: p.midC });
-        }
+  const esGanador = verificarCuatroEnRaya(nuevasFichas, miColorFicha, posicion);
+  
+  let tableroLleno = true;
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < 7; c++) {
+      if (nuevasFichas[r][c] === '') {
+        tableroLleno = false;
+        break;
       }
     }
-  });
+    if (!tableroLleno) break;
+  }
 
-  return destinos;
+  const otroJugador = estado.jugadorNegro.toLowerCase() === miNombre.toLowerCase() 
+    ? estado.jugadorGranate 
+    : estado.jugadorNegro;
+
+  if (esGanador) {
+    await update(ref(db, `chats/${chatId}/cuatroEnRaya`), {
+      ...estado,
+      turno: '',
+      ganador: miNombre,
+      fichas: nuevasFichas
+    });
+  } else if (tableroLleno) {
+    const nuevoTablero = obtenerTableroCuatroEnRayaInicial(estado.jugadorNegro, estado.jugadorGranate);
+    await update(ref(db, `chats/${chatId}/cuatroEnRaya`), nuevoTablero);
+    alert("¡Empate! Tablero lleno. Reiniciando juego...");
+  } else {
+    await update(ref(db, `chats/${chatId}/cuatroEnRaya`), {
+      ...estado,
+      turno: otroJugador,
+      fichas: nuevasFichas
+    });
+  }
 }
 
-async function ejecutarMovimiento(estado, desde, hasta, chatId, miNombre) {
-  const nuevasFichas = estado.fichas.map(row => [...row]);
-  const colorFicha = nuevasFichas[desde.r][desde.c];
+function verificarCuatroEnRaya(tablero, color, ultimaPosicion) {
+  const r = ultimaPosicion.r;
+  const c = ultimaPosicion.c;
   
-  // Mover ficha de origen a destino
-  nuevasFichas[desde.r][desde.c] = '';
-  nuevasFichas[hasta.r][hasta.c] = colorFicha;
+  const direcciones = [
+    { dr: 0, dc: 1 },  // Horizontal
+    { dr: 1, dc: 0 },  // Vertical
+    { dr: 1, dc: 1 },  // Diagonal \
+    { dr: 1, dc: -1 }  // Diagonal /
+  ];
 
-  // Comprobar si fue un salto de captura para eliminar la ficha intermedia
-  const diffR = Math.abs(hasta.r - desde.r);
-  if (diffR === 2) {
-    const midR = (desde.r + hasta.r) / 2;
-    const midC = (desde.c + hasta.c) / 2;
-    nuevasFichas[midR][midC] = ''; // Ficha comida destruida
-  }
-
-  // Recuento de fichas para verificar fin de juego
-  let numBlancas = 0, numRojas = 0;
-  for (let r = 0; r < 6; r++) {
-    for (let c = 0; c < 6; c++) {
-      if (nuevasFichas[r][c] === 'B') numBlancas++;
-      if (nuevasFichas[r][c] === 'R') numRojas++;
+  for (const { dr, dc } of direcciones) {
+    let contador = 1;
+    
+    for (let i = 1; i < 4; i++) {
+      const nr = r + dr * i;
+      const nc = c + dc * i;
+      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7 && tablero[nr][nc] === color) {
+        contador++;
+      } else {
+        break;
+      }
     }
+    
+    for (let i = 1; i < 4; i++) {
+      const nr = r - dr * i;
+      const nc = c - dc * i;
+      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7 && tablero[nr][nc] === color) {
+        contador++;
+      } else {
+        break;
+      }
+    }
+    
+    if (contador >= 4) return true;
   }
-
-  let ganador = '';
-  if (numBlancas === 0) ganador = estado.jugadorRojo;
-  if (numRojas === 0) ganador = estado.jugadorBlanco;
-
-  const otroJugador = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase() 
-    ? estado.jugadorRojo 
-    : estado.jugadorBlanco;
-
-  await update(ref(db, `chats/${chatId}/damas`), {
-    ...estado,
-    turno: ganador ? '' : otroJugador,
-    ganador: ganador,
-    fichas: nuevasFichas
-  });
+  
+  return false;
 }
 
-// 7. ASIGNACIÓN INICIAL DE EVENTOS AL CARGAR DOM
-document.addEventListener("DOMContentLoaded", () => {
+// 7. ASIGNACIÓN INICIAL DE EVENTOS Y AUTO-LOGIN
+document.addEventListener("DOMContentLoaded", async () => {
   cargarPreguntas();
   window.mostrarSeccion("mode-selector");
 
@@ -787,4 +787,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btnVolver = document.getElementById("btn-volver-selector");
   if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
+
+  const sesionGuardada = localStorage.getItem("sesion_usuario");
+  if (sesionGuardada) {
+    try {
+      const { nombre } = JSON.parse(sesionGuardada);
+      if (nombre) {
+        usuarioActualGlobal = nombre;
+        await window.cargarListaChats(nombre);
+      }
+    } catch (e) {
+      console.error("Error al autorecuperar la sesión:", e);
+    }
+  }
 });
+
+```
