@@ -460,7 +460,6 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
     alert("Ocurrió un error al abrir la sala de chat.");
   }
 };
-
 window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
@@ -469,7 +468,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
-  const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
@@ -484,7 +482,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
         <li>Respeto mutuo y consentimiento en todo momento.</li>
         <li>El ganador de las damas asigna un rol o reto al perdedor.</li>
       </ul>
-      <p style="color: #fbcfe8; margin: 0 0 10px 0; font-size: 0.85em;"><b>🎲 Pregunta Rompehielos:</b> <i>"${preguntaElegida}"</i></p>
       
       <button id="btn-toggle-damas" type="button" style="background: #2563eb; color: #ffffff; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: block;">
         ♟️ Abrir / Ocultar Tablero de Damas
