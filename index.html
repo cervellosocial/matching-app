@@ -11,11 +11,11 @@
     <h1>Crush y Gilicrush 🖤</h1>
 
     <!-- Selector de Modo -->
-    <div id="mode-selector" class="card">
-      <h2>¿Qué quieres hacer?</h2>
-      <button onclick="windows.mostrarSeccion('quiz-section')">📜 Hacer el Test / Crear Perfil</button>
-      <button onclick="windows.mostrarSeccion('login-section')" class="secondary-btn">📬 Consultar mi Buzón (PIN)</button>
-    </div>
+   <div id="mode-selector" class="card">
+  <h2>¿Qué quieres hacer?</h2>
+  <button id="btn-ir-quiz">📜 Hacer el Test / Crear Perfil</button>
+  <button id="btn-ir-login" class="secondary-btn">📬 Consultar mi Buzón (PIN)</button>
+</div>
 
     <!-- Formulario de Registro y Cuestionario -->
     <div id="quiz-section" class="card hidden">
@@ -53,18 +53,18 @@
 
     <!-- Acceso al Buzón -->
     <div id="login-section" class="card hidden">
-      <h2>Consulta tu Buzón</h2>
-      <div class="age-block">
-        <label for="login-name"><b>Tu nombre registrado:</b></label>
-        <input type="text" id="login-name" placeholder="Tu nombre">
-      </div>
-      <div class="age-block">
-        <label for="login-pin"><b>Tu PIN (4 dígitos):</b></label>
-        <input type="password" id="login-pin" maxlength="4" placeholder="****">
-      </div>
-      <button onclick="windows.accederBuzon()">Entrar a mi Buzón</button>
-      <button onclick="windows.mostrarSeccion('mode-selector')" class="cancel-btn">Volver</button>
-    </div>
+  <h2>Consulta tu Buzón</h2>
+  <div class="age-block">
+    <label for="login-name"><b>Tu nombre registrado:</b></label>
+    <input type="text" id="login-name" placeholder="Tu nombre">
+  </div>
+  <div class="age-block">
+    <label for="login-pin"><b>Tu PIN (4 dígitos):</b></label>
+    <input type="password" id="login-pin" maxlength="4" placeholder="****">
+  </div>
+  <button id="btn-entrar-buzon">Entrar a mi Buzón</button>
+  <button id="btn-volver-selector" class="cancel-btn">Volver</button>
+</div>
 
     <!-- Buzón Privado de Notificaciones -->
     <div id="mailbox-section" class="card hidden">
