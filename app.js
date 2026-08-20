@@ -109,8 +109,8 @@ function ocultarSecciones() {
     listenerChatActivo = null;
     refChatActiva = null;
   }
-  if (refDamasActivo && listenerDamasActivo) {
-    off(refDamasActivo, "value", listenerDamasActivo);
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
     listenerDamasActivo = null;
     refDamasActiva = null;
   }
@@ -628,7 +628,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat) 
     }
   }, 50);
 
-  if (refChatActiva && listenerChatActivo) off(refChatActivo, "value", listenerChatActivo);
+  if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
 
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
@@ -1112,9 +1112,6 @@ async function ejecutarMovimiento(estado, desde, hasta, chatId, miNombre) {
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
   window.mostrarSeccion("mode-selector");
-
-  const btnSubmit = document.getElementById("submit-btn");
-  if (btnSubmit) btnSubmit.onclick = () => window.guardarYEmparejar();
 
   const btnQuiz = document.getElementById("btn-ir-quiz");
   if (btnQuiz) btnQuiz.onclick = () => window.mostrarSeccion("quiz-section");
