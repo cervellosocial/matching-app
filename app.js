@@ -477,10 +477,9 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
     <!-- MÓDULO DE REGLAS Y DAMAS -->
     <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
-      <h4 style="color: #f59e0b; margin-top:0; margin-bottom: 6px;">📜 Reglas de Comportamiento y Juego</h4>
+      <h4 style="color: #f59e0b; margin-top:0; margin-bottom: 6px;">Reglas del Juego</h4>
       <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
-        <li>Respeto mutuo y consentimiento en todo momento.</li>
-        <li>El ganador de las damas asigna un rol o reto al perdedor.</li>
+        <li>El perdedor obedece al ganador</li>
       </ul>
       
       <button id="btn-toggle-damas" type="button" style="background: #2563eb; color: #ffffff; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: block;">
