@@ -201,7 +201,7 @@ function mostrarResultados(resultados, miNombre) {
   matchesList.innerHTML = resultados.map((r, index) => {
     const esGilicrush = r.esGilicrush;
     const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
-    const etiqueta = esGilicrush ? "⚡ ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
+    const etiqueta = esGilicrush ? "💀 ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
     const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
@@ -320,12 +320,12 @@ window.cargarListaChats = async function(miNombre) {
       return;
     }
 
-    let htmlOutput = `<h3 style="color: #ffffff; text-align: left; margin-bottom: 15px;">📫 Tu Buzón de Conexiones</h3>`;
+    let htmlOutput = `<h3 style="color: #ffffff; text-align: left; margin-bottom: 15px;">Tu Buzón de Conexiones</h3>`;
 
     resultadosAfinidad.forEach((r, index) => {
       const esGilicrush = r.esGilicrush;
       const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
-      const etiqueta = esGilicrush ? "⚡ GILICRUSH" : "💘 MATCH";
+      const etiqueta = esGilicrush ? "💀 GILICRUSH" : "💘 MATCH";
       const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
       
       const chatIniciado = chatsExistentes[r.nombre.toLowerCase()];
@@ -412,7 +412,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
       <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
-      <h3 style="margin-top:10px; color: #ffffff;">💬 Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
+      <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
     <!-- BOTÓN Y CONTENEDOR DEL JUEGO DE DAMAS -->
