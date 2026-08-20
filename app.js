@@ -433,33 +433,6 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
-window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText) {
-  try {
-    const chatId = obtenerChatId(miNombre, otroNombre);
-    const chatRef = ref(db, `chats/${chatId}`);
-    const snapshot = await get(chatRef);
-
-    if (!snapshot.exists()) {
-      await update(chatRef, {
-        participantes: [miNombre, otroNombre],
-        porcentaje: porcentajeText,
-        ultimoMensaje: primerMensaje,
-        fecha: Date.now()
-      });
-
-      await push(ref(db, `chats/${chatId}/mensajes`), {
-        de: miNombre,
-        texto: primerMensaje,
-        fecha: Date.now()
-      });
-    }
-
-    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
-  } catch (e) {
-    console.error("Error al crear/iniciar chat:", e);
-    alert("Ocurrió un error al abrir la sala de chat.");
-  }
-};
 window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
@@ -469,24 +442,19 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
 
+  // Inyectamos el HTML manteniendo tu diseño original exacto
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px; background: #374151; color: white; border: none;">⬅️ Volver a mis chats</button>
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
-    <!-- MÓDULO DE REGLAS Y DAMAS -->
-    <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
-      <h4 style="color: #f59e0b; margin-top:0; margin-bottom: 6px;">Reglas del Juego</h4>
-      <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
-        <li>El perdedor obedece al ganador</li>
-      </ul>
-      
-      <button id="btn-toggle-damas" type="button" style="background: #2563eb; color: #ffffff; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: block;">
-        ♟️ Abrir / Ocultar Tablero de Damas
+    <div style="margin-bottom: 12px; text-align: center;">
+      <button id="btn-toggle-damas" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
+        ♟️ Abrir / Ocultar Damas (si jugáis, el perdedor acepta obedecer al ganador)
       </button>
-
-      <div id="damas-board-container" style="display: none; margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+      
+      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
         <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
         <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
       </div>
@@ -497,28 +465,36 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     </div>
     
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
-      <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" />
-      <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #db2777 !important; color: #ffffff !important; border: none !important;">Enviar mensaje</button>
+      <input 
+        type="text" 
+        id="chat-input" 
+        placeholder="Escribe tu mensaje aquí..." 
+        style="width: 100% !important; height: 48px !important; padding: 0 14px !important; font-size: 16px !important; color: #000000 !important; background-color: #ffffff !important; border: 2px solid #888 !important; border-radius: 6px !important; box-sizing: border-box !important; display: block !important;" 
+      />
+      <button 
+        id="btn-send-msg" 
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
+      >
+        Enviar mensaje
+      </button>
     </div>
   `;
 
-  // Asignamos el evento Toggle directo en tiempo de ejecución diferido
+  // Asignamos el manejador de click para el botón con la clase "hidden" propia de tu estilo
   setTimeout(() => {
     const btnToggle = document.getElementById("btn-toggle-damas");
     const container = document.getElementById("damas-board-container");
     if (btnToggle && container) {
       btnToggle.onclick = () => {
-        if (container.style.display === "none" || container.style.display === "") {
-          container.style.display = "block";
-        } else {
-          container.style.display = "none";
-        }
+        container.classList.toggle("hidden");
       };
     }
   }, 50);
 
+  // Limpieza de listeners anteriores
   if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
 
+  // Escuchador en tiempo real de Firebase para mensajes
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
 
@@ -552,6 +528,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     }
   });
 
+  // Eventos para el botón de enviar y Enter
   const btnSend = document.getElementById("btn-send-msg");
   const inputEl = document.getElementById("chat-input");
 
@@ -573,6 +550,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
+  // Carga e inicialización de la lógica del juego de damas
   window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
 
