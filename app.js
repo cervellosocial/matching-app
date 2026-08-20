@@ -115,7 +115,6 @@ window.guardarYEmparejar = async function() {
       });
     }
 
-    // SI EL USUARIO YA EXISTE, NO PERMITIR REPETIR
     if (usuarioExistente) {
       if (usuarioExistente.pin !== pin) {
         alert("Este nombre ya está registrado con otro PIN. Usa el PIN correcto o elige otro nombre.");
@@ -186,9 +185,10 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeMatch = comparables > 0 ? Math.round((aciertos / comparables) * 100) : 0;
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
+      // FILTRO AJUSTADO AL 90%
       return { 
         nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
-        esMatch: porcentajeMatch >= 60, esGilicrush: porcentajeGilicrush >= 60
+        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
       };
     })
     .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
@@ -203,7 +203,7 @@ function mostrarResultados(resultados, miNombre) {
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
 
   if (matchesFiltrados.length === 0) {
-    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil guardado! Aún no hay perfiles compatibles en tu rango de edad.</p>";
+    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil guardado! Aún no hay perfiles con el 90% de compatibilidad en tu rango de edad.</p>";
     return;
   }
 
@@ -325,12 +325,14 @@ window.cargarListaChats = async function(miNombre) {
 
     const mapaFinalConexiones = new Map();
 
+    // Solo se añaden automáticamente los que cumplan la condición del 90%
     resultadosAfinidad.forEach(r => {
       if (r.esMatch || r.esGilicrush) {
         mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
       }
     });
 
+    // Mantener los chats que ya han sido iniciados previamente
     Object.keys(chatsExistentes).forEach(nombreOtro => {
       if (!mapaFinalConexiones.has(nombreOtro)) {
         const usuarioEncontrado = otrosUsuarios.find(u => u.nombre.toLowerCase() === nombreOtro);
@@ -353,14 +355,14 @@ window.cargarListaChats = async function(miNombre) {
           <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
           <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
         </div>
-        <p style='color: #ffffff;'>Aún no tienes conexiones o personas en tu rango de edad.</p>
+        <p style='color: #ffffff;'>Aún no hay conexiones con al menos un 90% de compatibilidad u oposición.</p>
       `;
       return;
     }
 
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
+        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones (90%+)</h3>
         <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
       </div>
     `;
@@ -379,13 +381,13 @@ window.cargarListaChats = async function(miNombre) {
             <p><b>Afinidad:</b> ${textoPorcentaje}</p>
           </div>
           ${chatIniciado ? `
-            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p>
+            <p style="color: #ddd; font-size: 0.9em; margin: 8px 0;"><b>Último mensaje:</b> "${chatIniciado.ultimoMsg}"</p> 
             <button id="btn-buzon-chat-${index}" style="background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Continuar Conversación
             </button>
           ` : `
             <p style="color: #bbb; font-size: 0.85em; margin: 8px 0;"><i>Aún no habéis hablado. ¡Inicia la conversación!</i></p>
-            <button id="btn-buzon-chat-${index}" style="background: #db2777; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button id="btn-buzon-chat-${index}" style="background: #52525e; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
               💬 Iniciar Chat
             </button>
           `}
@@ -485,7 +487,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       />
       <button 
         id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #7e0202 !important; color: #ffffff !important; border: none !important;"
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
       >
         Enviar mensaje
       </button>
@@ -691,7 +693,6 @@ function ocultarSecciones() {
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
 
-  // Comprobar si hay sesión guardada al abrir la aplicación
   const sesionGuardada = localStorage.getItem("sesion_usuario");
   if (sesionGuardada) {
     try {
