@@ -228,7 +228,6 @@ function mostrarResultados(resultados, miNombre) {
     const claseCard = esGilicrush ? "match-item gilicrush-item" : "match-item";
     const etiqueta = esGilicrush ? "💀 ¡TU GILICRUSH!" : "💘 ¡NUEVO MATCH!";
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
-    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
     return `
       <div class="${claseCard}">
@@ -237,8 +236,6 @@ function mostrarResultados(resultados, miNombre) {
           <p>Has conectado con <b>${r.nombre} (${r.edad} años)</b> - <b>${textoPorcentaje}</b></p>
         </div>
         <div class="icebreaker-box">
-          <p class="icebreaker-question"><b>🎲 Pregunta sugerida:</b></p>
-          <p class="question-text"><i>"${preguntaElegida}"</i></p>
           <button id="btn-send-${index}">💬 Iniciar Chat con ${r.nombre}</button>
         </div>
       </div>
@@ -248,16 +245,33 @@ function mostrarResultados(resultados, miNombre) {
   matchesFiltrados.forEach((r, index) => {
     const esGilicrush = r.porcentajeGilicrush > r.porcentajeMatch;
     const textoPorcentaje = esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
-    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
+      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje);
     }
   });
 }
 
 // 5. CHAT Y BUZÓN
+
+window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
+  const chatId = obtenerChatId(miNombre, otroNombre);
+  try {
+    const chatRef = ref(db, `chats/${chatId}`);
+    const snapshot = await get(chatRef);
+    if (!snapshot.exists()) {
+      await update(chatRef, {
+        participantes: [miNombre, otroNombre],
+        porcentaje: porcentajeText,
+        fecha: Date.now()
+      });
+    }
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
+  } catch (e) {
+    console.error("Error al iniciar o cargar el chat:", e);
+  }
+};
 
 window.accederBuzon = async function() {
   const nombreInput = document.getElementById("login-name");
@@ -413,11 +427,10 @@ window.cargarListaChats = async function(miNombre) {
       const chatIniciado = chatsExistentes[r.nombre.toLowerCase()];
       const esGilicrush = r.porcentajeGilicrush > r.porcentajeMatch;
       const textoPorcentaje = chatIniciado && chatIniciado.porcentaje ? chatIniciado.porcentaje : (esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`);
-      const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, "", textoPorcentaje);
       }
     });
 
@@ -442,7 +455,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
 
-  // Inyectamos el HTML manteniendo tu diseño original exacto
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
       <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
@@ -480,7 +492,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     </div>
   `;
 
-  // Asignamos el manejador de click para el botón con la clase "hidden" propia de tu estilo
   setTimeout(() => {
     const btnToggle = document.getElementById("btn-toggle-damas");
     const container = document.getElementById("damas-board-container");
@@ -491,10 +502,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     }
   }, 50);
 
-  // Limpieza de listeners anteriores
   if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
 
-  // Escuchador en tiempo real de Firebase para mensajes
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
 
@@ -528,7 +537,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
     }
   });
 
-  // Eventos para el botón de enviar y Enter
   const btnSend = document.getElementById("btn-send-msg");
   const inputEl = document.getElementById("chat-input");
 
@@ -550,7 +558,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  // Carga e inicialización de la lógica del juego de damas
   window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
 
