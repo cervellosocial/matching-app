@@ -757,101 +757,118 @@ window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
 function renderizarTableroDamas(estado, chatId, miNombre) {
   const grid = document.getElementById("damas-grid");
   const turnInfo = document.getElementById("damas-turn-info");
-  if (!grid || !turnInfo) return;
+  if (!grid || !turnInfo) {
+    console.error("No se encontraron elementos del DOM: grid o turnInfo");
+    return;
+  }
 
   console.log("Renderizando tablero, filas:", estado.fichas ? estado.fichas.length : "undefined");
 
-  if (estado.ganador) {
-    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador: <b>${estado.ganador}</b></span>`;
-  } else {
+  try {
+    if (estado.ganador) {
+      turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador: <b>${estado.ganador}</b></span>`;
+    } else {
+      const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
+      const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+      const miColorFicha = soyBlanco ? 'B' : 'R';
+
+      turnInfo.innerHTML = esMiTurno 
+        ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
+        : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
+    }
+
+    grid.innerHTML = "";
+    
+    // Asegurar que el grid sea 8x8
+    grid.style.gridTemplateColumns = "repeat(8, 40px)";
+    grid.style.gridTemplateRows = "repeat(8, 40px)";
+    grid.style.display = "grid";
+    
     const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
     const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
     const miColorFicha = soyBlanco ? 'B' : 'R';
+    const miColorDama = 'D' + miColorFicha;
 
-    turnInfo.innerHTML = esMiTurno 
-      ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
-      : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
-  }
-
-  grid.innerHTML = "";
-  
-  // Asegurar que el grid sea 8x8
-  grid.style.gridTemplateColumns = "repeat(8, 40px)";
-  grid.style.gridTemplateRows = "repeat(8, 40px)";
-  
-  const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-  const miColorFicha = soyBlanco ? 'B' : 'R';
-  const miColorDama = 'D' + miColorFicha;
-
-  // Obtener movimientos válidos si hay una ficha seleccionada
-  let destinosValidos = [];
-  if (fichaSeleccionada && esMiTurno && !estado.ganador) {
-    destinosValidos = calcularDestinosValidos(estado, fichaSeleccionada, miNombre);
-  }
-
-  // Forzar siempre 8x8 en el renderizado
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
-      const cell = document.createElement("div");
-      const esCasillaOscura = (r + c) % 2 !== 0;
-      
-      // Usar datos del estado o vacío si están fuera de rango
-      let contenidoFicha = '';
-      if (estado.fichas && estado.fichas[r] && estado.fichas[r][c] !== undefined) {
-        contenidoFicha = estado.fichas[r][c];
+    // Obtener movimientos válidos si hay una ficha seleccionada
+    let destinosValidos = [];
+    if (fichaSeleccionada && esMiTurno && !estado.ganador) {
+      try {
+        destinosValidos = calcularDestinosValidos(estado, fichaSeleccionada, miNombre);
+      } catch (e) {
+        console.error("Error al calcular destinos:", e);
       }
-
-      cell.style.width = "40px";
-      cell.style.height = "40px";
-      cell.style.display = "flex";
-      cell.style.alignItems = "center";
-      cell.style.justifyContent = "center";
-      cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
-      cell.style.position = "relative";
-      cell.style.boxSizing = "border-box";
-
-      // Resaltar ficha seleccionada
-      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
-        cell.style.border = "3px solid #f59e0b";
-      }
-
-      // Resaltar destinos posibles (verdes)
-      const esDestinoValido = destinosValidos.some(d => d.r === r && d.c === c);
-      if (esDestinoValido) {
-        cell.style.backgroundColor = "#15803d"; // Verde
-        cell.style.cursor = "pointer";
-      }
-
-      // Dibujar fichas
-      if (contenidoFicha === 'B') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
-      } else if (contenidoFicha === 'R') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
-      } else if (contenidoFicha === 'DB') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:3px solid #ffd700; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'><span style='position:absolute; font-size:14px; font-weight:bold; color:#000;'>👑</span></div>";
-      } else if (contenidoFicha === 'DR') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:3px solid #ffd700; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'><span style='position:absolute; font-size:14px; font-weight:bold; color:#fff;'>👑</span></div>";
-      }
-
-      cell.onclick = () => {
-        if (estado.ganador || !esMiTurno || !esCasillaOscura) return;
-
-        // Seleccionar propia ficha (incluyendo damas)
-        const esMiFicha = contenidoFicha === miColorFicha || contenidoFicha === 'D' + miColorFicha;
-        if (esMiFicha) {
-          fichaSeleccionada = { r, c };
-          renderizarTableroDamas(estado, chatId, miNombre);
-        } 
-        // Mover a destino válido
-        else if (fichaSeleccionada && esDestinoValido) {
-          ejecutarMovimiento(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
-          fichaSeleccionada = null;
-        }
-      };
-
-      grid.appendChild(cell);
     }
+
+    // Forzar siempre 8x8 en el renderizado
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const cell = document.createElement("div");
+        const esCasillaOscura = (r + c) % 2 !== 0;
+        
+        // Usar datos del estado o vacío si están fuera de rango
+        let contenidoFicha = '';
+        if (estado.fichas && estado.fichas[r] && estado.fichas[r][c] !== undefined) {
+          contenidoFicha = estado.fichas[r][c];
+        }
+
+        cell.style.width = "40px";
+        cell.style.height = "40px";
+        cell.style.display = "flex";
+        cell.style.alignItems = "center";
+        cell.style.justifyContent = "center";
+        cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
+        cell.style.position = "relative";
+        cell.style.boxSizing = "border-box";
+
+        // Resaltar ficha seleccionada
+        if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
+          cell.style.border = "3px solid #f59e0b";
+        }
+
+        // Resaltar destinos posibles (verdes)
+        const esDestinoValido = destinosValidos.some(d => d.r === r && d.c === c);
+        if (esDestinoValido) {
+          cell.style.backgroundColor = "#15803d"; // Verde
+          cell.style.cursor = "pointer";
+        }
+
+        // Dibujar fichas
+        if (contenidoFicha === 'B') {
+          cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
+        } else if (contenidoFicha === 'R') {
+          cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
+        } else if (contenidoFicha === 'DB') {
+          cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:3px solid #ffd700; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'><span style='position:absolute; font-size:14px; font-weight:bold; color:#000;'>👑</span></div>";
+        } else if (contenidoFicha === 'DR') {
+          cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:3px solid #ffd700; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'><span style='position:absolute; font-size:14px; font-weight:bold; color:#fff;'>👑</span></div>";
+        }
+
+        cell.onclick = () => {
+          try {
+            if (estado.ganador || !esMiTurno || !esCasillaOscura) return;
+
+            // Seleccionar propia ficha (incluyendo damas)
+            const esMiFicha = contenidoFicha === miColorFicha || contenidoFicha === 'D' + miColorFicha;
+            if (esMiFicha) {
+              fichaSeleccionada = { r, c };
+              renderizarTableroDamas(estado, chatId, miNombre);
+            } 
+            // Mover a destino válido
+            else if (fichaSeleccionada && esDestinoValido) {
+              ejecutarMovimiento(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
+              fichaSeleccionada = null;
+            }
+          } catch (e) {
+            console.error("Error en onclick de celda:", e);
+          }
+        };
+
+        grid.appendChild(cell);
+      }
+    }
+  } catch (e) {
+    console.error("Error al renderizar tablero:", e);
+    turnInfo.innerHTML = `<span style="color: #ef4444;">Error al renderizar tablero</span>`;
   }
 }
 
