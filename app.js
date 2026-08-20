@@ -385,14 +385,16 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
-
-  listenerChatActivo = onValue(msgsRef, (snapshot) => {
+listenerChatActivo = onValue(msgsRef, (snapshot) => {
     const box = document.getElementById("chat-messages-box");
     if (!box) return;
 
     if (snapshot.exists()) {
       const msgsObj = snapshot.val();
-      box.innerHTML = Object.values(msgsObj).map(m => {
+      const msgsArray = Object.values(msgsObj);
+
+      // 1. Renderizar mensajes normales
+      let htmlContent = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
         const fondoBurbuja = esMio ? "#dcf8c6" : "#f1f5f9";
@@ -406,6 +408,22 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
           </div>
         `;
       }).join('');
+
+      // 2. Contar interacción de ambos usuarios
+      const misMensajes = msgsArray.filter(m => m.de.toLowerCase() === miNombre.toLowerCase()).length;
+      const susMensajes = msgsArray.filter(m => m.de.toLowerCase() === otroNombre.toLowerCase()).length;
+
+      // 3. Inyectar eventos según el número de respuestas
+      if (misMensajes >= 3 && susMensajes >= 3) { //Aquí CAMBIAS EL MENSAJE DEL CHAT TRAS EL TERCER MENSAJE DE AMBOS
+        htmlContent += `
+          <div style="background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 100%); border: 2px dashed #be185d; padding: 12px; border-radius: 10px; margin: 15px 0; text-align: center; color: #831843; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+            <p style="font-weight: bold; font-size: 15px; margin: 0 0 4px 0;">🔥 ¡CUPIDO DETECTA BUENA QUÍMICA!</p>
+            <p style="font-size: 13px; margin: 0 0 8px 0; line-height: 1.3;">Habéis superado los 3 mensajes básicos. Desafío rápido: <b>¿Cuál es vuestro mayor defecto al empezar a conocer a alguien?</b></p>
+          </div>
+        `;
+      }
+
+      box.innerHTML = htmlContent;
       box.scrollTop = box.scrollHeight;
     } else {
       box.innerHTML = "<p style='color: #6b7280;'>No hay mensajes aún.</p>";
