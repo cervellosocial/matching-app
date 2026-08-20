@@ -8,13 +8,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>Crussh y Gilicrush 🖤</h1>
+    <h1>Crush y Gilicrush 🖤</h1>
 
     <!-- Selector de Modo -->
     <div id="mode-selector" class="card">
       <h2>¿Qué quieres hacer?</h2>
-      <button onclick="mostrarSeccion('quiz-section')">📜 Hacer el Test / Crear Perfil</button>
-      <button onclick="mostrarSeccion('login-section')" class="secondary-btn">📬 Consultar mi Buzón (PIN)</button>
+      <button onclick="windows.mostrarSeccion('quiz-section')">📜 Hacer el Test / Crear Perfil</button>
+      <button onclick="windows.mostrarSeccion('login-section')" class="secondary-btn">📬 Consultar mi Buzón (PIN)</button>
     </div>
 
     <!-- Formulario de Registro y Cuestionario -->
@@ -62,8 +62,8 @@
         <label for="login-pin"><b>Tu PIN (4 dígitos):</b></label>
         <input type="password" id="login-pin" maxlength="4" placeholder="****">
       </div>
-      <button onclick="accederBuzon()">Entrar a mi Buzón</button>
-      <button onclick="mostrarSeccion('mode-selector')" class="cancel-btn">Volver</button>
+      <button onclick="windows.accederBuzon()">Entrar a mi Buzón</button>
+      <button onclick="windows.mostrarSeccion('mode-selector')" class="cancel-btn">Volver</button>
     </div>
 
     <!-- Buzón Privado de Notificaciones -->
