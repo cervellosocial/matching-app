@@ -46,22 +46,6 @@ function obtenerChatId(user1, user2) {
   return [user1.toLowerCase(), user2.toLowerCase()].sort().join("_");
 }
 
-function obtenerPreguntaAleatoria() {
-  const preguntasAleatorias = [
-    "¿Cuál fue tu mejor viaje?",
-    "¿Qué superpoder te gustaría tener?",
-    "¿Cuál es tu película favorita?",
-    "¿Qué es lo primero que harías si ganaras la lotería?",
-    "¿Cuál es tu comida favorita?",
-    "¿Qué libro te ha marcado más?",
-    "¿Si pudieras cenar con cualquier persona, quién sería?",
-    "¿Cuál es tu recuerdo infantil favorito?",
-    "¿Qué hobbys tienes?",
-    "¿Qué canción no puedes dejar de escuchar?"
-  ];
-  return preguntasAleatorias[Math.floor(Math.random() * preguntasAleatorias.length)];
-}
-
 function cargarPreguntas() {
   const container = document.getElementById("questions-container");
   if (!container) return;
@@ -96,11 +80,21 @@ function evaluarCondicionales() {
   });
 }
 
+// Inicializar preguntas al cargar la página
+document.addEventListener("DOMContentLoaded", () => {
+  cargarPreguntas();
+});
+
 // 5. MÉTODOS EXPUESTOS A WINDOW PARA EVENTOS
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
   const el = document.getElementById(id);
-  if (el) el.classList.remove("hidden");
+  if (el) {
+    el.classList.remove("hidden");
+    if (id === "quiz-section") {
+      cargarPreguntas(); // Garantiza la renderización de las preguntas
+    }
+  }
 };
 
 function ocultarSecciones() {
