@@ -469,3 +469,32 @@ function ocultarSecciones() {
 }
 
 window.onload = cargarPreguntas;
+// Asignación segura de eventos cuando el DOM esté listo
+document.addEventListener("DOMContentLoaded", () => {
+  // Cargar preguntas si estamos en la vista inicial
+  cargarPreguntas();
+
+  // Botón para ir al test
+  const btnQuiz = document.getElementById("btn-ir-quiz");
+  if (btnQuiz) {
+    btnQuiz.addEventListener("click", () => window.mostrarSeccion("quiz-section"));
+  }
+
+  // Botón para ir al login del buzón
+  const btnLogin = document.getElementById("btn-ir-login");
+  if (btnLogin) {
+    btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
+  }
+
+  // Botón para entrar al buzón (validar PIN)
+  const btnEntrarBuzon = document.getElementById("btn-entrar-buzon");
+  if (btnEntrarBuzon) {
+    btnEntrarBuzon.addEventListener("click", () => window.accederBuzon());
+  }
+
+  // Botón volver al menú principal
+  const btnVolver = document.getElementById("btn-volver-selector");
+  if (btnVolver) {
+    btnVolver.addEventListener("click", () => window.mostrarSeccion("mode-selector"));
+  }
+});
