@@ -134,7 +134,7 @@ window.guardarYEmparejar = async function() {
         return;
       }
       
-      alert("⚠️ Ya has completado este formulario previamente. No es posible repetirlo.");
+      alert("⚠️ Ya has completado este formulario previamente. Accediendo a tus chats.");
       usuarioActualGlobal = usuarioExistente.nombre;
       localStorage.setItem("sesion_usuario", JSON.stringify({ nombre: usuarioExistente.nombre, pin }));
       
@@ -202,7 +202,8 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
 
       const miPref = usuarioActual.respuestas ? usuarioActual.respuestas["q_chat_pref"] : "A";
       const suPref = u.respuestas ? u.respuestas["q_chat_pref"] : "A";
-      const tipoChat = (miPref === "B" && suPref === "B") ? "reglas" : "aleatorio";
+      // Si cualquiera elige la opción B (Reglas/Juego) o si coinciden, se habilita modo reglas
+      const tipoChat = (miPref === "B" || suPref === "B") ? "reglas" : "aleatorio";
 
       return { 
         nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
@@ -345,7 +346,7 @@ window.cargarListaChats = async function(miNombre) {
             chatId,
             ultimoMsg: chat.ultimoMensaje || "",
             porcentaje: chat.porcentaje || "",
-            tipoChat: chat.tipoChat || "aleatorio"
+            tipoChat: chat.tipoChat || "reglas"
           };
         }
       });
@@ -389,7 +390,7 @@ window.cargarListaChats = async function(miNombre) {
 
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones (90%+)</h3>
+        <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones</h3>
         <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px; cursor:pointer;">Cerrar Sesión</button>
       </div>
     `;
@@ -432,7 +433,7 @@ window.cargarListaChats = async function(miNombre) {
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat);
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat || "reglas");
       }
     });
 
@@ -448,7 +449,7 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
-window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText, tipoChat = "aleatorio") {
+window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText, tipoChat = "reglas") {
   try {
     const chatId = obtenerChatId(miNombre, otroNombre);
     const chatRef = ref(db, `chats/${chatId}`);
@@ -458,7 +459,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
         porcentaje: porcentajeText,
-        tipoChat: tipoChat,
+        tipoChat: "reglas",
         ultimoMensaje: primerMensaje,
         fecha: Date.now()
       });
@@ -470,7 +471,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
       });
     } else {
       const datosChat = snapshot.val();
-      if (datosChat.tipoChat) tipoChat = datosChat.tipoChat;
+      tipoChat = datosChat.tipoChat || "reglas";
     }
 
     window.abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat);
@@ -480,7 +481,7 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
   }
 };
 
-window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat = "aleatorio") {
+window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat = "reglas") {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -489,39 +490,30 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
 
-  let cabeceraEspecial = "";
+  const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
-  if (tipoChat === "reglas") {
-    cabeceraEspecial = `
-      <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
-        <h4 style="color: #f59e0b; margin-top:0;">📜 Reglas de Comportamiento y Juego de Roles</h4>
-        <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
-          <li>Respeto mutuo y consentimiento en todo momento.</li>
-          <li>El ganador de las damas asigna un rol o penitencia al perdedor.</li>
-          <li>Estableced una palabra clave de seguridad antes de empezar.</li>
-        </ul>
-        <button id="btn-toggle-damas" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: inset 0 0 0 0.5px #ffffff;">
-          ♟️ Abrir / Ocultar Tablero de Damas
-        </button>
-        <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px;">
-          <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
-          <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
-        </div>
+  const cabeceraEspecial = `
+    <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
+      <h4 style="color: #f59e0b; margin-top:0; margin-bottom: 6px;">📜 Reglas de Comportamiento y Juego</h4>
+      <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
+        <li>Respeto mutuo y consentimiento en todo momento.</li>
+        <li>El ganador de las damas asigna un rol o reto al perdedor.</li>
+      </ul>
+      <p style="color: #fbcfe8; margin: 0 0 10px 0; font-size: 0.85em;"><b>🎲 Pregunta Rompehielos:</b> <i>"${preguntaElegida}"</i></p>
+      
+      <button id="btn-toggle-damas" style="background: #2563eb; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        ♟️ Abrir / Ocultar Tablero de Damas
+      </button>
+      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+        <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
+        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
       </div>
-    `;
-  } else {
-    const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
-    cabeceraEspecial = `
-      <div style="margin-bottom: 12px; background: #831843; padding: 12px; border-radius: 8px; border: 1px solid #be185d; text-align: left;">
-        <p style="color: #fbcfe8; margin: 0; font-size: 0.85em;"><b>🎲 Pregunta Rompehielos del Chat:</b></p>
-        <p style="color: #ffffff; margin: 5px 0 0 0; font-style: italic;">"${preguntaElegida}"</p>
-      </div>
-    `;
-  }
+    </div>
+  `;
 
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px; background: #374151; color: white; border: none;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
 
@@ -593,9 +585,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  if (tipoChat === "reglas") {
-    window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
-  }
+  // Inicializa las damas independientemente para tenerlas siempre listas
+  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
 
 // 6. DAMAS
@@ -740,12 +731,11 @@ function ocultarSecciones() {
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
 
-  // Forzar siempre mostrar la pantalla de inicio principal
   window.mostrarSeccion("mode-selector");
-const btnQuiz = document.getElementById("btn-ir-quiz");
+
+  const btnQuiz = document.getElementById("btn-ir-quiz");
   if (btnQuiz) {
     btnQuiz.addEventListener("click", () => {
-      // Directamente mostramos la sección del formulario/test
       window.mostrarSeccion("quiz-section");
     });
   }
