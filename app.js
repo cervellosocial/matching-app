@@ -200,15 +200,9 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeMatch = comparables > 0 ? Math.round((aciertos / comparables) * 100) : 0;
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
-      const miPref = usuarioActual.respuestas ? usuarioActual.respuestas["q_chat_pref"] : "A";
-      const suPref = u.respuestas ? u.respuestas["q_chat_pref"] : "A";
-      // Si cualquiera elige la opción B (Reglas/Juego) o si coinciden, se habilita modo reglas
-      const tipoChat = (miPref === "B" || suPref === "B") ? "reglas" : "aleatorio";
-
       return { 
         nombre: u.nombre, edad: u.edad, porcentajeMatch, porcentajeGilicrush,
-        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90,
-        tipoChat: tipoChat
+        esMatch: porcentajeMatch >= 90, esGilicrush: porcentajeGilicrush >= 90
       };
     })
     .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
@@ -258,7 +252,7 @@ function mostrarResultados(resultados, miNombre) {
     
     const btn = document.getElementById(`btn-send-${index}`);
     if (btn) {
-      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat);
+      btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
     }
   });
 }
@@ -311,18 +305,14 @@ window.cargarListaChats = async function(miNombre) {
 
   try {
     const dbRef = ref(db);
-    
     const snapshotUsuarios = await get(child(dbRef, "usuarios"));
     let miUsuario = null;
     const otrosUsuarios = [];
 
     if (snapshotUsuarios.exists()) {
       Object.values(snapshotUsuarios.val()).forEach(u => {
-        if (u.nombre.toLowerCase() === miNombre.toLowerCase()) {
-          miUsuario = u;
-        } else {
-          otrosUsuarios.push(u);
-        }
+        if (u.nombre.toLowerCase() === miNombre.toLowerCase()) miUsuario = u;
+        else otrosUsuarios.push(u);
       });
     }
 
@@ -332,7 +322,6 @@ window.cargarListaChats = async function(miNombre) {
     }
 
     const resultadosAfinidad = calcularEmparejamientos(miUsuario, otrosUsuarios);
-
     const snapshotChats = await get(child(dbRef, "chats"));
     const chatsExistentes = {};
 
@@ -345,19 +334,15 @@ window.cargarListaChats = async function(miNombre) {
           chatsExistentes[otroNombre.toLowerCase()] = {
             chatId,
             ultimoMsg: chat.ultimoMensaje || "",
-            porcentaje: chat.porcentaje || "",
-            tipoChat: chat.tipoChat || "reglas"
+            porcentaje: chat.porcentaje || ""
           };
         }
       });
     }
 
     const mapaFinalConexiones = new Map();
-
     resultadosAfinidad.forEach(r => {
-      if (r.esMatch || r.esGilicrush) {
-        mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
-      }
+      if (r.esMatch || r.esGilicrush) mapaFinalConexiones.set(r.nombre.toLowerCase(), r);
     });
 
     Object.keys(chatsExistentes).forEach(nombreOtro => {
@@ -369,8 +354,7 @@ window.cargarListaChats = async function(miNombre) {
           porcentajeMatch: 50,
           porcentajeGilicrush: 50,
           esMatch: true,
-          esGilicrush: false,
-          tipoChat: chatsExistentes[nombreOtro].tipoChat
+          esGilicrush: false
         });
       }
     });
@@ -433,7 +417,7 @@ window.cargarListaChats = async function(miNombre) {
       const btn = document.getElementById(`btn-buzon-chat-${index}`);
       
       if (btn) {
-        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje, r.tipoChat || "reglas");
+        btn.onclick = () => window.iniciarOCargarChat(miNombre, r.nombre, preguntaElegida, textoPorcentaje);
       }
     });
 
@@ -449,7 +433,7 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
-window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText, tipoChat = "reglas") {
+window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, porcentajeText) {
   try {
     const chatId = obtenerChatId(miNombre, otroNombre);
     const chatRef = ref(db, `chats/${chatId}`);
@@ -459,7 +443,6 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
         porcentaje: porcentajeText,
-        tipoChat: "reglas",
         ultimoMensaje: primerMensaje,
         fecha: Date.now()
       });
@@ -469,19 +452,16 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, primerMensaje, 
         texto: primerMensaje,
         fecha: Date.now()
       });
-    } else {
-      const datosChat = snapshot.val();
-      tipoChat = datosChat.tipoChat || "reglas";
     }
 
-    window.abrirSalaChat(miNombre, otroNombre, porcentajeText, tipoChat);
+    window.abrirSalaChat(miNombre, otroNombre, porcentajeText);
   } catch (e) {
     console.error("Error al crear/iniciar chat:", e);
     alert("Ocurrió un error al abrir la sala de chat.");
   }
 };
 
-window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat = "reglas") {
+window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -489,10 +469,15 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
 
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
-
   const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
 
-  const cabeceraEspecial = `
+  list.innerHTML = `
+    <div style="margin-bottom: 12px; text-align: left;">
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px; background: #374151; color: white; border: none;">⬅️ Volver a mis chats</button>
+      <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
+    </div>
+
+    <!-- MÓDULO DE REGLAS Y DAMAS -->
     <div style="margin-bottom: 12px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569; text-align: left;">
       <h4 style="color: #f59e0b; margin-top:0; margin-bottom: 6px;">📜 Reglas de Comportamiento y Juego</h4>
       <ul style="color: #e2e8f0; font-size: 0.85em; margin: 5px 0 10px 18px; padding: 0;">
@@ -501,23 +486,15 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
       </ul>
       <p style="color: #fbcfe8; margin: 0 0 10px 0; font-size: 0.85em;"><b>🎲 Pregunta Rompehielos:</b> <i>"${preguntaElegida}"</i></p>
       
-      <button id="btn-toggle-damas" style="background: #2563eb; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+      <button id="btn-toggle-damas" type="button" style="background: #2563eb; color: #ffffff; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: block;">
         ♟️ Abrir / Ocultar Tablero de Damas
       </button>
-      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+
+      <div id="damas-board-container" style="display: none; margin-top: 10px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
         <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
         <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
       </div>
     </div>
-  `;
-
-  list.innerHTML = `
-    <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px; background: #374151; color: white; border: none;">⬅️ Volver a mis chats</button>
-      <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
-    </div>
-
-    ${cabeceraEspecial}
     
     <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #374151;">Cargando mensajes...</p>
@@ -528,6 +505,21 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
       <button id="btn-send-msg" style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #db2777 !important; color: #ffffff !important; border: none !important;">Enviar mensaje</button>
     </div>
   `;
+
+  // Asignamos el evento Toggle directo en tiempo de ejecución diferido
+  setTimeout(() => {
+    const btnToggle = document.getElementById("btn-toggle-damas");
+    const container = document.getElementById("damas-board-container");
+    if (btnToggle && container) {
+      btnToggle.onclick = () => {
+        if (container.style.display === "none" || container.style.display === "") {
+          container.style.display = "block";
+        } else {
+          container.style.display = "none";
+        }
+      };
+    }
+  }, 50);
 
   if (refChatActiva && listenerChatActivo) off(refChatActiva, "value", listenerChatActivo);
 
@@ -585,7 +577,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
   if (btnSend) btnSend.onclick = enviar;
   if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
-  // Inicializa las damas independientemente para tenerlas siempre listas
   window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
 
@@ -607,12 +598,6 @@ function obtenerTableroInicial(jugador1, jugador2) {
 }
 
 window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
-  const btnToggle = document.getElementById("btn-toggle-damas");
-  const container = document.getElementById("damas-board-container");
-  
-  if (!btnToggle || !container) return;
-  btnToggle.onclick = () => container.classList.toggle("hidden");
-
   if (refDamasActiva && listenerDamasActivo) off(refDamasActiva, "value", listenerDamasActivo);
 
   const damasRef = ref(db, `chats/${chatId}/damas`);
@@ -704,7 +689,7 @@ async function moverFicha(estado, desde, hasta, chatId, miNombre) {
   });
 }
 
-// 7. GESTIÓN DE VISTAS Y AUTOLOGIN
+// 7. GESTIÓN DE VISTAS Y EVENTOS INICIALES
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
   const el = document.getElementById(id);
@@ -734,11 +719,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.mostrarSeccion("mode-selector");
 
   const btnQuiz = document.getElementById("btn-ir-quiz");
-  if (btnQuiz) {
-    btnQuiz.addEventListener("click", () => {
-      window.mostrarSeccion("quiz-section");
-    });
-  }
+  if (btnQuiz) btnQuiz.addEventListener("click", () => window.mostrarSeccion("quiz-section"));
 
   const btnLogin = document.getElementById("btn-ir-login");
   if (btnLogin) btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
