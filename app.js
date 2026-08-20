@@ -1,8 +1,3 @@
-Aquí tienes el código completo con el juego de **4 en Raya** implementado (cuadrícula de $7 \times 7$ sobre fondo blanco, turnos alternados entre **negro** y **granate**, detección automática de victoria en horizontal, vertical o diagonal, y botón de reinicio).
-
-Puedes reemplazar completamente el contenido de tu archivo en GitHub con este código:
-
-```javascript
 // 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -30,7 +25,7 @@ let listenerJuegoActivo = null;
 let refJuegoActiva = null;
 let usuarioActualGlobal = null;
 
-const authPromise = signInAnonymously(auth)
+signInAnonymously(auth)
   .then(() => console.log("Sesión anónima iniciada"))
   .catch((e) => console.error("Error Auth:", e));
 
@@ -109,7 +104,6 @@ function ocultarSecciones() {
 }
 
 window.guardarYEmparejar = async function() {
-  await authPromise;
   const nombreInput = document.getElementById("username");
   const pinInput = document.getElementById("user-pin");
   const edadInput = document.getElementById("user-age");
@@ -271,7 +265,6 @@ function mostrarResultados(resultados, miNombre) {
 }
 
 window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
-  await authPromise;
   const chatId = obtenerChatId(miNombre, otroNombre);
   try {
     const chatRef = ref(db, `chats/${chatId}`);
@@ -291,7 +284,6 @@ window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial,
 };
 
 window.accederBuzon = async function() {
-  await authPromise;
   const nombreInput = document.getElementById("login-name");
   const pinInput = document.getElementById("login-pin");
 
@@ -327,7 +319,6 @@ window.accederBuzon = async function() {
 };
 
 window.cargarListaChats = async function(miNombre) {
-  await authPromise;
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -769,7 +760,7 @@ function verificarCuatroEnRaya(tablero, color, ultimaPosicion) {
 }
 
 // 7. ASIGNACIÓN INICIAL DE EVENTOS Y AUTO-LOGIN
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
   window.mostrarSeccion("mode-selector");
 
@@ -794,12 +785,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { nombre } = JSON.parse(sesionGuardada);
       if (nombre) {
         usuarioActualGlobal = nombre;
-        await window.cargarListaChats(nombre);
+        window.cargarListaChats(nombre);
       }
     } catch (e) {
       console.error("Error al autorecuperar la sesión:", e);
     }
   }
 });
-
-```
