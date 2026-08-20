@@ -572,6 +572,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
 // 6. JUEGO DE DAMAS (CON REGLAS, CAPTURA Y FIN DE JUEGO)
 
+// 6. JUEGO DE DAMAS (OPTIMIZADO, CON INDICADORES Y REGLAS EXACTAS)
+
 function obtenerTableroInicial(jugador1, jugador2) {
   return {
     turno: jugador1,
@@ -590,8 +592,14 @@ function obtenerTableroInicial(jugador1, jugador2) {
 }
 
 window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
-  if (refDamasActiva && listenerDamasActivo) off(refDamasActiva, "value", listenerDamasActivo);
+  // Desactivar cualquier listener previo para evitar ralentización
+  if (refDamasActiva) {
+    off(refDamasActiva);
+    refDamasActiva = null;
+    listenerDamasActivo = null;
+  }
 
+  fichaSeleccionada = null; // Reiniciar selección local
   const damasRef = ref(db, `chats/${chatId}/damas`);
   refDamasActiva = damasRef;
 
@@ -612,7 +620,7 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   if (!grid || !turnInfo) return;
 
   if (estado.ganador) {
-    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador/a: <b>${estado.ganador}</b></span>`;
+    turnInfo.innerHTML = `<span style="color: #f59e0b; font-size: 15px;">🏆 ¡FIN DEL JUEGO! Ganador: <b>${estado.ganador}</b></span>`;
   } else {
     const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
     const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
@@ -624,6 +632,15 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   }
 
   grid.innerHTML = "";
+  const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+  const miColorFicha = soyBlanco ? 'B' : 'R';
+
+  // Obtener movimientos válidos si hay una ficha seleccionada
+  let destinosValidos = [];
+  if (fichaSeleccionada && esMiTurno && !estado.ganador) {
+    destinosValidos = calcularDestinosValidos(estado, fichaSeleccionada, miNombre);
+  }
 
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 6; c++) {
@@ -637,32 +654,39 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
       cell.style.alignItems = "center";
       cell.style.justifyContent = "center";
       cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
-      cell.style.cursor = (esCasillaOscura && !estado.ganador) ? "pointer" : "default";
+      cell.style.position = "relative";
+      cell.style.boxSizing = "border-box";
 
-      if (contenidoFicha === 'B') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000;'></div>";
-      } else if (contenidoFicha === 'R') {
-        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000;'></div>";
+      // Resaltar ficha seleccionada
+      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
+        cell.style.border = "3px solid #f59e0b";
       }
 
-      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
-        cell.style.border = "2px solid #f59e0b";
+      // Resaltar destinos posibles (verdes)
+      const esDestinoValido = destinosValidos.some(d => d.r === r && d.c === c);
+      if (esDestinoValido) {
+        cell.style.backgroundColor = "#15803d"; // Verde
+        cell.style.cursor = "pointer";
+      }
+
+      // Dibujar fichas
+      if (contenidoFicha === 'B') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
+      } else if (contenidoFicha === 'R') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);'></div>";
       }
 
       cell.onclick = () => {
-        if (estado.ganador) return;
-        const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
-        if (!esMiTurno || !esCasillaOscura) return;
+        if (estado.ganador || !esMiTurno || !esCasillaOscura) return;
 
-        const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-        const miColorFicha = soyBlanco ? 'B' : 'R';
-
+        // Seleccionar propia ficha
         if (contenidoFicha === miColorFicha) {
           fichaSeleccionada = { r, c };
           renderizarTableroDamas(estado, chatId, miNombre);
         } 
-        else if (fichaSeleccionada && contenidoFicha === '') {
-          moverFicha(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
+        // Mover a destino válido
+        else if (fichaSeleccionada && esDestinoValido) {
+          ejecutarMovimiento(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
           fichaSeleccionada = null;
         }
       };
@@ -672,49 +696,54 @@ function renderizarTableroDamas(estado, chatId, miNombre) {
   }
 }
 
-async function moverFicha(estado, desde, hasta, chatId, miNombre) {
+function calcularDestinosValidos(estado, desde, miNombre) {
+  const destinos = [];
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+  const dirR = soyBlanco ? -1 : 1; // Blancas suben (-1), Rojas bajan (+1)
+  const colorEnemigo = soyBlanco ? 'R' : 'B';
+
+  const posiblesPasos = [
+    // Movimiento normal (1 casilla diagonal adelante)
+    { r: desde.r + dirR, c: desde.c - 1, esCaptura: false },
+    { r: desde.r + dirR, c: desde.c + 1, esCaptura: false },
+    // Captura (2 casillas diagonal adelante)
+    { r: desde.r + (dirR * 2), c: desde.c - 2, esCaptura: true, midR: desde.r + dirR, midC: desde.c - 1 },
+    { r: desde.r + (dirR * 2), c: desde.c + 2, esCaptura: true, midR: desde.r + dirR, midC: desde.c + 1 }
+  ];
+
+  posiblesPasos.forEach(p => {
+    // Validar limites del tablero 6x6
+    if (p.r >= 0 && p.r < 6 && p.c >= 0 && p.c < 6) {
+      if (estado.fichas[p.r][p.c] === '') { // Destino libre
+        if (!p.esCaptura) {
+          destinos.push({ r: p.r, c: p.c });
+        } else if (estado.fichas[p.midR][p.midC] === colorEnemigo) { // Hay enemigo para comer
+          destinos.push({ r: p.r, c: p.c, esCaptura: true, midR: p.midR, midC: p.midC });
+        }
+      }
+    }
+  });
+
+  return destinos;
+}
+
+async function ejecutarMovimiento(estado, desde, hasta, chatId, miNombre) {
   const nuevasFichas = estado.fichas.map(row => [...row]);
   const colorFicha = nuevasFichas[desde.r][desde.c];
-  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
-
-  // Blancas avanzan hacia arriba (-1), Rojas hacia abajo (+1)
-  const dirR = soyBlanco ? -1 : 1; 
-  const diffR = hasta.r - desde.r;
-  const diffC = Math.abs(hasta.c - desde.c);
-
-  let esMovimientoValido = false;
-  let esCaptura = false;
-  let midR = null, midC = null;
-
-  // 1. Movimiento simple de 1 casilla diagonal adelante
-  if (diffR === dirR && diffC === 1) {
-    esMovimientoValido = true;
-  }
-  // 2. Movimiento de captura (2 casillas diagonal adelante)
-  else if (diffR === dirR * 2 && diffC === 2) {
-    midR = (desde.r + hasta.r) / 2;
-    midC = (desde.c + hasta.c) / 2;
-    const fichaIntermedia = nuevasFichas[midR][midC];
-    const colorEnemigo = soyBlanco ? 'R' : 'B';
-
-    if (fichaIntermedia === colorEnemigo) {
-      esMovimientoValido = true;
-      esCaptura = true;
-    }
-  }
-
-  if (!esMovimientoValido) return; // Si no cumple la regla diagonal/distancia, ignora el movimiento
-
-  // Mover ficha
+  
+  // Mover ficha de origen a destino
   nuevasFichas[desde.r][desde.c] = '';
   nuevasFichas[hasta.r][hasta.c] = colorFicha;
 
-  // Si fue captura, eliminar la ficha comida
-  if (esCaptura) {
-    nuevasFichas[midR][midC] = '';
+  // Comprobar si fue un salto de captura para eliminar la ficha intermedia
+  const diffR = Math.abs(hasta.r - desde.r);
+  if (diffR === 2) {
+    const midR = (desde.r + hasta.r) / 2;
+    const midC = (desde.c + hasta.c) / 2;
+    nuevasFichas[midR][midC] = ''; // Ficha comida destruida
   }
 
-  // Comprobar si hay un ganador (quedar sin fichas)
+  // Recuento de fichas para verificar fin de juego
   let numBlancas = 0, numRojas = 0;
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 6; c++) {
