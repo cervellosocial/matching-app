@@ -742,18 +742,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Forzar siempre mostrar la pantalla de inicio principal
   window.mostrarSeccion("mode-selector");
-
-  const btnQuiz = document.getElementById("btn-ir-quiz");
+const btnQuiz = document.getElementById("btn-ir-quiz");
   if (btnQuiz) {
     btnQuiz.addEventListener("click", () => {
-      const sesion = localStorage.getItem("sesion_usuario");
-      if (sesion) {
-        alert("⚠️ Ya has completado el formulario anteriormente. Te redirigimos a tu buzón.");
-        const datos = JSON.parse(sesion);
-        window.cargarListaChats(datos.nombre);
-      } else {
-        window.mostrarSeccion("quiz-section");
-      }
+      // Directamente mostramos la sección del formulario/test
+      window.mostrarSeccion("quiz-section");
     });
   }
 
