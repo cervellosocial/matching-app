@@ -80,6 +80,8 @@ function evaluarCondicionales() {
     if (q.dependeDe) {
       const padre = document.querySelector(`input[name="${q.dependeDe.preguntaId}"]:checked`);
       const bloqueHijo = document.getElementById(`block-${q.id}`);
+      if (!bloqueHijo) return;
+      
       if (padre && padre.value === q.dependeDe.valorRequerido) {
         bloqueHijo.classList.remove("hidden");
       } else {
@@ -91,17 +93,27 @@ function evaluarCondicionales() {
 }
 
 window.guardarYEmparejar = async function() {
-  const nombre = document.getElementById("username").value.trim();
-  const pin = document.getElementById("user-pin").value.trim();
-  const edad = parseInt(document.getElementById("user-age").value);
-  const minEdad = parseInt(document.getElementById("min-age").value);
-  const maxEdad = parseInt(document.getElementById("max-age").value);
+  const nombreInput = document.getElementById("username");
+  const pinInput = document.getElementById("user-pin");
+  const edadInput = document.getElementById("user-age");
+  const minEdadInput = document.getElementById("min-age");
+  const maxEdadInput = document.getElementById("max-age");
+
+  if (!nombreInput || !pinInput) return;
+
+  const nombre = nombreInput.value.trim();
+  const pin = pinInput.value.trim();
+  const edad = parseInt(edadInput.value);
+  const minEdad = parseInt(minEdadInput.value);
+  const maxEdad = parseInt(maxEdadInput.value);
 
   if (!nombre || !pin || pin.length !== 4) return alert("Nombre y PIN de 4 dígitos obligatorios.");
 
   const submitBtn = document.getElementById("submit-btn");
-  submitBtn.innerText = "Verificando...";
-  submitBtn.disabled = true;
+  if (submitBtn) {
+    submitBtn.innerText = "Verificando...";
+    submitBtn.disabled = true;
+  }
 
   try {
     const dbRef = ref(db);
@@ -157,8 +169,10 @@ window.guardarYEmparejar = async function() {
     console.error(e);
     alert("Error conectando con la base de datos.");
   } finally {
-    submitBtn.innerText = "Guardar y Buscar Matches";
-    submitBtn.disabled = false;
+    if (submitBtn) {
+      submitBtn.innerText = "Guardar y Buscar Matches";
+      submitBtn.disabled = false;
+    }
   }
 };
 
@@ -186,7 +200,6 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
       const porcentajeMatch = comparables > 0 ? Math.round((aciertos / comparables) * 100) : 0;
       const porcentajeGilicrush = comparables > 0 ? Math.round((desaciertos / comparables) * 100) : 0;
 
-      // Determinación de tipo de chat: Prevalece 'aleatorio' si no coinciden ambos en 'B' (reglas)
       const miPref = usuarioActual.respuestas ? usuarioActual.respuestas["q_chat_pref"] : "A";
       const suPref = u.respuestas ? u.respuestas["q_chat_pref"] : "A";
       const tipoChat = (miPref === "B" && suPref === "B") ? "reglas" : "aleatorio";
@@ -204,6 +217,8 @@ function mostrarResultados(resultados, miNombre) {
   ocultarSecciones();
   const resultsSection = document.getElementById("results-section");
   const matchesList = document.getElementById("matches-list");
+  if (!resultsSection || !matchesList) return;
+
   resultsSection.classList.remove("hidden");
 
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
@@ -250,8 +265,13 @@ function mostrarResultados(resultados, miNombre) {
 // 5. CHAT Y BUZÓN
 
 window.accederBuzon = async function() {
-  const nombre = document.getElementById("login-name").value.trim();
-  const pin = document.getElementById("login-pin").value.trim();
+  const nombreInput = document.getElementById("login-name");
+  const pinInput = document.getElementById("login-pin");
+
+  if (!nombreInput || !pinInput) return;
+
+  const nombre = nombreInput.value.trim();
+  const pin = pinInput.value.trim();
 
   if (!nombre || !pin) return alert("Ingresa tu nombre y PIN.");
 
@@ -283,8 +303,9 @@ window.cargarListaChats = async function(miNombre) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
-  mailbox.classList.remove("hidden");
+  if (!mailbox || !list) return;
 
+  mailbox.classList.remove("hidden");
   list.innerHTML = "<p style='color: #ffffff;'>Cargando tu buzón...</p>";
 
   try {
@@ -359,7 +380,7 @@ window.cargarListaChats = async function(miNombre) {
       list.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
           <h3 style="color: #ffffff; margin:0;">Tu Buzón</h3>
-          <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
+          <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px; cursor:pointer;">Cerrar Sesión</button>
         </div>
         <p style='color: #ffffff;'>Aún no hay conexiones con al menos un 90% de compatibilidad u oposición.</p>
       `;
@@ -369,7 +390,7 @@ window.cargarListaChats = async function(miNombre) {
     let htmlOutput = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
         <h3 style="color: #ffffff; margin:0;">Tu Buzón de Conexiones (90%+)</h3>
-        <button onclick="cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px;">Cerrar Sesión</button>
+        <button onclick="window.cerrarSesion()" style="width: auto; padding: 6px 12px; background: #dc2626; font-size: 12px; cursor:pointer;">Cerrar Sesión</button>
       </div>
     `;
 
@@ -463,8 +484,9 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
-  mailbox.classList.remove("hidden");
+  if (!mailbox || !list) return;
 
+  mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
 
   let cabeceraEspecial = "";
@@ -554,6 +576,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
   const inputEl = document.getElementById("chat-input");
 
   const enviar = async () => {
+    if (!inputEl) return;
     const txt = inputEl.value.trim();
     if (!txt) return;
 
@@ -567,8 +590,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText, tipoChat =
     }
   };
 
-  btnSend.onclick = enviar;
-  inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
+  if (btnSend) btnSend.onclick = enviar;
+  if (inputEl) inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
 
   if (tipoChat === "reglas") {
     window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
@@ -596,7 +619,7 @@ window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
   const btnToggle = document.getElementById("btn-toggle-damas");
   const container = document.getElementById("damas-board-container");
   
-  if (!btnToggle) return;
+  if (!btnToggle || !container) return;
   btnToggle.onclick = () => container.classList.toggle("hidden");
 
   if (refDamasActiva && listenerDamasActivo) off(refDamasActiva, "value", listenerDamasActivo);
@@ -693,7 +716,8 @@ async function moverFicha(estado, desde, hasta, chatId, miNombre) {
 // 7. GESTIÓN DE VISTAS Y AUTOLOGIN
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
-  document.getElementById(id).classList.remove("hidden");
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("hidden");
 };
 
 function ocultarSecciones() {
@@ -716,18 +740,8 @@ function ocultarSecciones() {
 document.addEventListener("DOMContentLoaded", () => {
   cargarPreguntas();
 
-  const sesionGuardada = localStorage.getItem("sesion_usuario");
-  if (sesionGuardada) {
-    try {
-      const datosSesion = JSON.parse(sesionGuardada);
-      if (datosSesion.nombre) {
-        usuarioActualGlobal = datosSesion.nombre;
-        window.cargarListaChats(datosSesion.nombre);
-      }
-    } catch (e) {
-      console.error("Error al recuperar sesión", e);
-    }
-  }
+  // Forzar siempre mostrar la pantalla de inicio principal
+  window.mostrarSeccion("mode-selector");
 
   const btnQuiz = document.getElementById("btn-ir-quiz");
   if (btnQuiz) {
