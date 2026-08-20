@@ -1,11 +1,3 @@
-Para solucionar estos dos detalles en tu `app.js`:
-
-1. **Auto-login desactivado de inicio:** Se ha comentado la recuperación automática de sesión de `localStorage` en el `DOMContentLoaded` para que la página de inicio siempre sea el menú principal (`mode-selector`). Se mantendrá la sesión guardada si accedes directamente.
-2. **Rompehielos / Pregunta aleatoria restaurado:** Se ha añadido nuevamente el botón para generar preguntas aleatorias dentro del chat y romper el hielo.
-
-Sustituye todo el contenido de tu archivo `app.js` por el siguiente código:
-
-```javascript
 // 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -37,7 +29,7 @@ signInAnonymously(auth)
   .then(() => console.log("Sesión anónima iniciada"))
   .catch((e) => console.error("Error Auth:", e));
 
-// 4. DATOS Y PREGUNTAS
+// 4. DATOS, PREGUNTAS Y REGLAS
 const preguntas = [
   { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
   { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
@@ -49,7 +41,8 @@ const preguntas = [
   { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria / Rompehielos", opB: "📜 Reglas de comportamiento y juegos", regla: "igual" }
 ];
 
-const preguntasRompehielos = [
+// GRUPO 1: PREGUNTAS CASUALES (Chat Rompehielos)
+const preguntasRompehielosCasual = [
   "¿Cuál es tu lugar favorito para una cita informal?",
   "¿Qué hobby te apasiona pero pocas personas conocen?",
   "¿Prefieres una película en casa o una salida espontánea?",
@@ -57,6 +50,25 @@ const preguntasRompehielos = [
   "¿Si pudieras viajar a cualquier lugar mañana mismo, a dónde irías?",
   "¿Qué canción no puedes dejar de escuchar últimamente?",
   "¿Eres más de madrugar o de trasnochar?"
+];
+
+// GRUPO 2: PREGUNTAS DE ROL Y LÍMITES (Chat Protocolar)
+const preguntasRompehielosProtocolar = [
+  "¿Cuál es una regla o límite indispensable que siempre pones en una interacción?",
+  "¿Qué cualidad te impresiona más cuando alguien asume un rol de liderazgo?",
+  "Si tuvieras que definir tu estilo de comunicación en una palabra, ¿cuál sería?",
+  "¿Qué tipo de castigo suave o reto consideras divertido en una dinámica?",
+  "¿Qué detalle de protocolo o cortesía te llama más la atención?",
+  "¿Prefieres que las reglas sean estrictas o que se adapten sobre la marcha?",
+  "¿Qué valoras más: la disciplina total o la creatividad bajo ciertas normas?"
+];
+
+// REGLAS DE COMPORTAMIENTO ALEATORIAS (Chat Protocolar)
+const conjuntosDeNormas = [
+  "📜 **Protocolo Alpha:** 1. Mantener siempre la cortesía. 2. Aceptar los retos del juego 4 en Raya sin objeción. 3. Responder con honestidad a cada pregunta.",
+  "📜 **Protocolo de Respeto Y Dinámica:** 1. Usar un tono formal si el otro participante lo solicita. 2. Los límites acordados no se negocian durante el juego. 3. Priorizar el consenso explícito.",
+  "📜 **Protocolo de Juego Guiado:** 1. Cada movimiento fallido en el 4 en raya implica responder una pregunta del otro. 2. Mantener la fluidez en el chat. 3. Sinceridad absoluta.",
+  "📜 **Protocolo de Roles:** 1. Escuchar activamente las peticiones de la otra persona. 2. Definir una palabra de seguridad o pausa si es necesario. 3. Divertirse bajo el marco de reglas establecido."
 ];
 
 function obtenerChatId(user1, user2) {
@@ -285,15 +297,44 @@ function mostrarResultados(resultados, miNombre) {
 window.iniciarOCargarChat = async function(miNombre, otroNombre, mensajeInicial, porcentajeText) {
   const chatId = obtenerChatId(miNombre, otroNombre);
   try {
+    const dbRef = ref(db);
+    const snapshotUsuarios = await get(child(dbRef, "usuarios"));
+    
+    let prefMiUser = "A";
+    let prefOtroUser = "A";
+
+    if (snapshotUsuarios.exists()) {
+      Object.values(snapshotUsuarios.val()).forEach(u => {
+        if (u.nombre && u.nombre.toLowerCase() === miNombre.toLowerCase()) {
+          if (u.respuestas && u.respuestas.q_chat_pref) prefMiUser = u.respuestas.q_chat_pref;
+        }
+        if (u.nombre && u.nombre.toLowerCase() === otroNombre.toLowerCase()) {
+          if (u.respuestas && u.respuestas.q_chat_pref) prefOtroUser = u.respuestas.q_chat_pref;
+        }
+      });
+    }
+
+    // ALTERNATIVA 2: Si ambos eligen B -> Protocolar. Si coinciden en A o discrepan -> Rompehielos
+    let tipoChatCalculado = "rompehielos";
+    if (prefMiUser === "B" && prefOtroUser === "B") {
+      tipoChatCalculado = "protocolar";
+    }
+
     const chatRef = ref(db, `chats/${chatId}`);
-    const snapshot = await get(chatRef);
-    if (!snapshot.exists()) {
+    const snapshotChat = await get(chatRef);
+
+    if (!snapshotChat.exists()) {
+      const normaAleatoria = conjuntosDeNormas[Math.floor(Math.random() * conjuntosDeNormas.length)];
+
       await update(chatRef, {
         participantes: [miNombre, otroNombre],
         porcentaje: porcentajeText || "",
+        tipoChat: tipoChatCalculado,
+        normaAsignada: normaAleatoria,
         fecha: Date.now()
       });
     }
+
     window.abrirSalaChat(miNombre, otroNombre, porcentajeText || "");
   } catch (e) {
     console.error("Error al iniciar/cargar chat:", e);
@@ -476,9 +517,10 @@ window.cerrarSesion = function() {
   window.mostrarSeccion('mode-selector');
 };
 
-window.enviarPreguntaAleatoria = async function(chatId, miNombre) {
-  const preguntaRandom = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
-  const textoEnviar = `🎲 Pregunta para romper el hielo: "${preguntaRandom}"`;
+window.enviarPreguntaAleatoria = async function(chatId, miNombre, tipoChat) {
+  const listaPreguntas = (tipoChat === "protocolar") ? preguntasRompehielosProtocolar : preguntasRompehielosCasual;
+  const preguntaRandom = listaPreguntas[Math.floor(Math.random() * listaPreguntas.length)];
+  const textoEnviar = `🎲 Pregunta rompehielos: "${preguntaRandom}"`;
 
   try {
     await push(ref(db, `chats/${chatId}/mensajes`), { de: miNombre, texto: textoEnviar, fecha: Date.now() });
@@ -488,7 +530,7 @@ window.enviarPreguntaAleatoria = async function(chatId, miNombre) {
   }
 };
 
-window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
+window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
   ocultarSecciones();
   const mailbox = document.getElementById("mailbox-section");
   const list = document.getElementById("notifications-list");
@@ -497,15 +539,43 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   mailbox.classList.remove("hidden");
   const chatId = obtenerChatId(miNombre, otroNombre);
 
+  let tipoChat = "rompehielos";
+  let normaAsignada = "";
+
+  try {
+    const chatSnap = await get(ref(db, `chats/${chatId}`));
+    if (chatSnap.exists()) {
+      const cData = chatSnap.val();
+      if (cData.tipoChat) tipoChat = cData.tipoChat;
+      if (cData.normaAsignada) normaAsignada = cData.normaAsignada;
+    }
+  } catch(e) {
+    console.error("Error leyendo info del chat:", e);
+  }
+
+  let htmlNormasBlock = "";
+  if (tipoChat === "protocolar" && normaAsignada) {
+    htmlNormasBlock = `
+      <div style="background: #1e293b; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: left; color: #f8fafc; font-size: 13px; line-height: 1.4;">
+        ${normaAsignada.replace(/\n/g, '<br>')}
+      </div>
+    `;
+  }
+
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
       <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
-      <h3 style="margin-top:10px; color: #ffffff;">Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
+      <h3 style="margin-top:10px; color: #ffffff;">
+        Chat con ${otroNombre} 
+        <small style="color: #ccc;">(${porcentajeText} - Modo: ${tipoChat === 'protocolar' ? '📜 Protocolar' : '🎲 Rompehielos'})</small>
+      </h3>
     </div>
+
+    ${htmlNormasBlock}
 
     <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-direction: column;">
       <button id="btn-rompehielos" type="button" style="background: #eab308; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        🎲 Enviar Pregunta Aleatoria (Rompehielos)
+        🎲 Enviar Pregunta Aleatoria
       </button>
       <button id="btn-toggle-juego" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
         ⚪ Abrir / Ocultar 4 en Raya
@@ -549,7 +619,7 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
     const btnRompehielos = document.getElementById("btn-rompehielos");
     if (btnRompehielos) {
-      btnRompehielos.onclick = () => window.enviarPreguntaAleatoria(chatId, miNombre);
+      btnRompehielos.onclick = () => window.enviarPreguntaAleatoria(chatId, miNombre, tipoChat);
     }
   }, 50);
 
@@ -817,5 +887,3 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnVolver = document.getElementById("btn-volver-selector");
   if (btnVolver) btnVolver.onclick = () => window.mostrarSeccion("mode-selector");
 });
-
-```
