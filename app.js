@@ -21,7 +21,10 @@ const auth = getAuth(app);
 
 let listenerChatActivo = null; 
 let refChatActiva = null;
+let listenerDamasActivo = null;
+let refDamasActiva = null;
 let usuarioActualGlobal = null;
+let fichaSeleccionada = null;
 
 signInAnonymously(auth)
   .then(() => console.log("Sesión anónima iniciada"))
@@ -30,14 +33,14 @@ signInAnonymously(auth)
 // 4. DATOS Y PREGUNTAS
 const preguntasRompehielos = [
   "¿Cuál ha sido el último concierto/evento al que has ido? ¿O el próximo que tienes ganas de ir?",
-"¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
-"¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
+  "¿Algún viaje que tengas pendiente o que hayas hecho recientemente y me quieras contar?",
+  "¿Tienes alguna habilidad rara o inútil que sorprenda a la gente?",
   "Si pudieras cenar con tres personas (vivas o muertas), ¿con quién sería?",
-"¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
-"Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
+  "¿Qué superpoder elegirías si tuvieras que usarlo todos los días obligatoriamente?",
+  "Si te tocase la lotería mañana pero tuvieras que seguir trabajando en algo, ¿qué harías?",
   "¿Hay algo que la gente suele asumir de ti que no es cierto?",
-"¿Qué es lo último que te ha hecho reír en voz alta?",
-"¿Tienes alguna manía o ritual extraño que hagas sin pensar?"
+  "¿Qué es lo último que te ha hecho reír en voz alta?",
+  "¿Tienes alguna manía o ritual extraño que hagas sin pensar?"
 ];
 
 const preguntas = [
@@ -266,7 +269,6 @@ window.cargarListaChats = async function(miNombre) {
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
-  // Ocultar elementos estáticos del HTML que interfieren con la interfaz
   const replyBoxEstatica = mailbox.querySelector(".reply-box");
   if (replyBoxEstatica) replyBoxEstatica.style.display = "none";
 
@@ -275,7 +277,6 @@ window.cargarListaChats = async function(miNombre) {
   try {
     const dbRef = ref(db);
     
-    // 1. Obtener todos los usuarios para calcular Matches / Gilicrushes
     const snapshotUsuarios = await get(child(dbRef, "usuarios"));
     let miUsuario = null;
     const otrosUsuarios = [];
@@ -295,10 +296,8 @@ window.cargarListaChats = async function(miNombre) {
       return;
     }
 
-    // Calcular las afinidades y desafinidades con el resto de usuarios
     const resultadosAfinidad = calcularEmparejamientos(miUsuario, otrosUsuarios);
 
-    // 2. Obtener chats ya iniciados desde Firebase
     const snapshotChats = await get(child(dbRef, "chats"));
     const chatsExistentes = {};
 
@@ -316,7 +315,6 @@ window.cargarListaChats = async function(miNombre) {
       });
     }
 
-    // 3. Generar la vista combinada
     if (resultadosAfinidad.length === 0) {
       list.innerHTML = "<p style='color: #ffffff;'>Aún no tienes compatibilidades (Matches o Gilicrushes) registradas.</p>";
       return;
@@ -356,7 +354,6 @@ window.cargarListaChats = async function(miNombre) {
 
     list.innerHTML = htmlOutput;
 
-    // Asignar los eventos de clic a cada botón generado
     resultadosAfinidad.forEach((r, index) => {
       const textoPorcentaje = r.esGilicrush ? `${r.porcentajeGilicrush}% Opuestos` : `${r.porcentajeMatch}% Compatible`;
       const preguntaElegida = preguntasRompehielos[Math.floor(Math.random() * preguntasRompehielos.length)];
@@ -407,7 +404,6 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
   const list = document.getElementById("notifications-list");
   mailbox.classList.remove("hidden");
 
-  // Ocultar elementos estáticos del HTML que interfieren con la interfaz del chat
   const replyBoxEstatica = mailbox.querySelector(".reply-box");
   if (replyBoxEstatica) replyBoxEstatica.style.display = "none";
 
@@ -418,12 +414,23 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
       <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">💬 Chat con ${otroNombre} <small style="color: #ccc;">(${porcentajeText})</small></h3>
     </div>
+
+    <!-- BOTÓN Y CONTENEDOR DEL JUEGO DE DAMAS -->
+    <div style="margin-bottom: 12px; text-align: center;">
+      <button id="btn-toggle-damas" style="background: #059669; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        ♟️ Abrir / Ocultar Tablero de Damas
+      </button>
+      
+      <div id="damas-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
+        <p id="damas-turn-info" style="color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Cargando tablero...</p>
+        <div id="damas-grid" style="display: grid; grid-template-columns: repeat(6, 40px); grid-template-rows: repeat(6, 40px); gap: 2px; justify-content: center;"></div>
+      </div>
+    </div>
     
     <div id="chat-messages-box" style="height: 280px; overflow-y: auto; border: 1px solid #444; padding: 12px; border-radius: 8px; background: #ffffff !important; margin-bottom: 12px; text-align: left;">
       <p style="color: #374151;">Cargando mensajes...</p>
     </div>
     
-    <!-- Nueva barra de entrada de texto sustituta e independiente -->
     <div style="display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
       <input 
         type="text" 
@@ -446,7 +453,8 @@ window.abrirSalaChat = function(miNombre, otroNombre, porcentajeText) {
 
   const msgsRef = ref(db, `chats/${chatId}/mensajes`);
   refChatActiva = msgsRef;
-listenerChatActivo = onValue(msgsRef, (snapshot) => {
+
+  listenerChatActivo = onValue(msgsRef, (snapshot) => {
     const box = document.getElementById("chat-messages-box");
     if (!box) return;
 
@@ -454,7 +462,6 @@ listenerChatActivo = onValue(msgsRef, (snapshot) => {
       const msgsObj = snapshot.val();
       const msgsArray = Object.values(msgsObj);
 
-      // 1. Renderizar mensajes normales
       let htmlContent = msgsArray.map(m => {
         const esMio = m.de.toLowerCase() === miNombre.toLowerCase();
         const alineacion = esMio ? "text-align: right;" : "text-align: left;";
@@ -470,12 +477,10 @@ listenerChatActivo = onValue(msgsRef, (snapshot) => {
         `;
       }).join('');
 
-      // 2. Contar interacción de ambos usuarios
       const misMensajes = msgsArray.filter(m => m.de.toLowerCase() === miNombre.toLowerCase()).length;
       const susMensajes = msgsArray.filter(m => m.de.toLowerCase() === otroNombre.toLowerCase()).length;
 
-      // 3. Inyectar eventos según el número de respuestas
-      if (misMensajes >= 3 && susMensajes >= 3) { //Aquí CAMBIAS EL MENSAJE DEL CHAT TRAS EL TERCER MENSAJE DE AMBOS
+      if (misMensajes >= 3 && susMensajes >= 3) {
         htmlContent += `
           <div style="background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 100%); border: 2px dashed #be185d; padding: 12px; border-radius: 10px; margin: 15px 0; text-align: center; color: #831843; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
             <p style="font-weight: bold; font-size: 15px; margin: 0 0 4px 0;">🔥 ¡CUPIDO DETECTA BUENA QUÍMICA!</p>
@@ -510,7 +515,135 @@ listenerChatActivo = onValue(msgsRef, (snapshot) => {
 
   btnSend.onclick = enviar;
   inputEl.onkeypress = (e) => { if (e.key === 'Enter') enviar(); };
+
+  // Inicializar juego de Damas
+  window.inicializarJuegoDamas(chatId, miNombre, otroNombre);
 };
+
+// 6. LÓGICA DEL JUEGO DE LAS DAMAS
+
+function obtenerTableroInicial(jugador1, jugador2) {
+  return {
+    turno: jugador1,
+    jugadorBlanco: jugador1,
+    jugadorRojo: jugador2,
+    fichas: [
+      ['', 'R', '', 'R', '', 'R'],
+      ['R', '', 'R', '', 'R', ''],
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+      ['', 'B', '', 'B', '', 'B'],
+      ['B', '', 'B', '', 'B', '']
+    ]
+  };
+}
+
+window.inicializarJuegoDamas = function(chatId, miNombre, otroNombre) {
+  const btnToggle = document.getElementById("btn-toggle-damas");
+  const container = document.getElementById("damas-board-container");
+  
+  if (!btnToggle) return;
+
+  btnToggle.onclick = () => container.classList.toggle("hidden");
+
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
+  }
+
+  const damasRef = ref(db, `chats/${chatId}/damas`);
+  refDamasActiva = damasRef;
+
+  listenerDamasActivo = onValue(damasRef, (snapshot) => {
+    let estadoDamas = snapshot.val();
+
+    if (!estadoDamas) {
+      estadoDamas = obtenerTableroInicial(miNombre, otroNombre);
+      update(damasRef, estadoDamas);
+      return;
+    }
+
+    renderizarTableroDamas(estadoDamas, chatId, miNombre);
+  });
+};
+
+function renderizarTableroDamas(estado, chatId, miNombre) {
+  const grid = document.getElementById("damas-grid");
+  const turnInfo = document.getElementById("damas-turn-info");
+  if (!grid || !turnInfo) return;
+
+  const esMiTurno = estado.turno.toLowerCase() === miNombre.toLowerCase();
+  const soyBlanco = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase();
+  const miColorFicha = soyBlanco ? 'B' : 'R';
+
+  turnInfo.innerHTML = esMiTurno 
+    ? `<span style="color: #4ade80;">🟢 Es tu turno (${miColorFicha === 'B' ? '⚪ Blancas' : '🔴 Rojas'})</span>` 
+    : `<span style="color: #f87171;">⏳ Turno de ${estado.turno}...</span>`;
+
+  grid.innerHTML = "";
+
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const cell = document.createElement("div");
+      const esCasillaOscura = (r + c) % 2 !== 0;
+      const contenidoFicha = estado.fichas[r][c];
+
+      cell.style.width = "40px";
+      cell.style.height = "40px";
+      cell.style.display = "flex";
+      cell.style.alignItems = "center";
+      cell.style.justifyContent = "center";
+      cell.style.backgroundColor = esCasillaOscura ? "#334155" : "#cbd5e1";
+      cell.style.cursor = esCasillaOscura ? "pointer" : "default";
+
+      if (contenidoFicha === 'B') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ffffff; border:2px solid #000;'></div>";
+      } else if (contenidoFicha === 'R') {
+        cell.innerHTML = "<div style='width:26px; height:26px; border-radius:50%; background:#ef4444; border:2px solid #000;'></div>";
+      }
+
+      if (fichaSeleccionada && fichaSeleccionada.r === r && fichaSeleccionada.c === c) {
+        cell.style.border = "2px solid #f59e0b";
+      }
+
+      cell.onclick = () => {
+        if (!esMiTurno || !esCasillaOscura) return;
+
+        if (contenidoFicha === miColorFicha) {
+          fichaSeleccionada = { r, c };
+          renderizarTableroDamas(estado, chatId, miNombre);
+        } 
+        else if (fichaSeleccionada && contenidoFicha === '') {
+          moverFicha(estado, fichaSeleccionada, { r, c }, chatId, miNombre);
+          fichaSeleccionada = null;
+        }
+      };
+
+      grid.appendChild(cell);
+    }
+  }
+}
+
+async function moverFicha(estado, desde, hasta, chatId, miNombre) {
+  const nuevasFichas = estado.fichas.map(row => [...row]);
+  const colorFicha = nuevasFichas[desde.r][desde.c];
+
+  nuevasFichas[desde.r][desde.c] = '';
+  nuevasFichas[hasta.r][hasta.c] = colorFicha;
+
+  const otroJugador = estado.jugadorBlanco.toLowerCase() === miNombre.toLowerCase() 
+    ? estado.jugadorRojo 
+    : estado.jugadorBlanco;
+
+  const nuevoEstado = {
+    ...estado,
+    turno: otroJugador,
+    fichas: nuevasFichas
+  };
+
+  await update(ref(db, `chats/${chatId}/damas`), nuevoEstado);
+}
+
+// 7. GESTIÓN DE VISTAS Y NAVEGACIÓN
 
 window.mostrarSeccion = function(id) {
   ocultarSecciones();
@@ -523,6 +656,11 @@ function ocultarSecciones() {
     listenerChatActivo = null;
     refChatActiva = null;
   }
+  if (refDamasActiva && listenerDamasActivo) {
+    off(refDamasActiva, "value", listenerDamasActivo);
+    listenerDamasActivo = null;
+    refDamasActiva = null;
+  }
   ['mode-selector', 'quiz-section', 'login-section', 'mailbox-section', 'results-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add("hidden");
@@ -530,30 +668,25 @@ function ocultarSecciones() {
 }
 
 window.onload = cargarPreguntas;
-// Asignación segura de eventos cuando el DOM esté listo
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Cargar preguntas si estamos en la vista inicial
   cargarPreguntas();
 
-  // Botón para ir al test
   const btnQuiz = document.getElementById("btn-ir-quiz");
   if (btnQuiz) {
     btnQuiz.addEventListener("click", () => window.mostrarSeccion("quiz-section"));
   }
 
-  // Botón para ir al login del buzón
   const btnLogin = document.getElementById("btn-ir-login");
   if (btnLogin) {
     btnLogin.addEventListener("click", () => window.mostrarSeccion("login-section"));
   }
 
-  // Botón para entrar al buzón (validar PIN)
   const btnEntrarBuzon = document.getElementById("btn-entrar-buzon");
   if (btnEntrarBuzon) {
     btnEntrarBuzon.addEventListener("click", () => window.accederBuzon());
   }
 
-  // Botón volver al menú principal
   const btnVolver = document.getElementById("btn-volver-selector");
   if (btnVolver) {
     btnVolver.addEventListener("click", () => window.mostrarSeccion("mode-selector"));
