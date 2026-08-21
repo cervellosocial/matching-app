@@ -44,7 +44,25 @@
           <input type="number" id="max-age" min="18" max="99" placeholder="Máx" required>
         </div>
       </div>
-      
+      <!-- SECCIÓN DE GÉNERO E INTERÉS -->
+<div class="gender-section" style="margin: 20px 0; text-align: left; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155;">
+  <!-- Género del usuario -->
+  <p style="color: #ffffff; font-weight: bold; margin-bottom: 8px;">¿Con qué género te identificas?</p>
+  <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="radio" name="user-gender" value="no_binario"> No binario</label>
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="radio" name="user-gender" value="femenino"> Femenino</label>
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="radio" name="user-gender" value="masculino"> Masculino</label>
+  </div>
+
+  <!-- Género de interés (Checkboxes) -->
+  <p style="color: #ffffff; font-weight: bold; margin-bottom: 8px;">¿En qué género estás interesado/a? <small style="color:#94a3b8;">(Puedes elegir varios)</small></p>
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="checkbox" id="gen-interest-todos" value="todos" onchange="window.toggleInteresTodos(this)"> Todos</label>
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="checkbox" class="gen-interest-item" value="no_binario"> No binario</label>
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="checkbox" class="gen-interest-item" value="femenino"> Femenino</label>
+    <label style="color: #e2e8f0; cursor: pointer;"><input type="checkbox" class="gen-interest-item" value="masculino"> Masculino</label>
+  </div>
+</div>
       <div id="questions-container"></div>
       
       <button id="submit-btn" onclick="guardarYEmparejar()">Guardar y Buscar Matches</button>
