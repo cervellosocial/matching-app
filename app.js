@@ -37,14 +37,35 @@ signInAnonymously(auth)
 
 // 4. DATOS, PREGUNTAS Y REGLAS
 const preguntas = [
+ const preguntas = [
+  // --- Preguntas proporcionadas por el usuario ---
   { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
   { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
   { id: "q3", texto: "¿Restricciones sensoriales?", opA: "Sí 🙈", opB: "No 🚫", regla: "igual" },
   { id: "q4", texto: "¿Te gusta la humillación suave?", opA: "Sí 😳", opB: "No 🚫", regla: "igual" },
-  { id: "q5", texto: "¿Prefieres 24/7 o sesiones puntuales?", opA: "24/7 ⏰", opB: "Sesiones puntuales 📅", regla: "igual" },
+  { id: "q5", texto: "¿Prefieres (aunque estés abierto/a a ambas) 24/7 o sesiones puntuales?", opA: "24/7 ⏰", opB: "Sesiones puntuales 📅", regla: "igual" },
   { id: "q6", texto: "¿A la hora de tener relación con alguien, debéis tener la misma ideología política?", opA: "Sí 🗳️", opB: "No 🚫", regla: "igual" },
   { id: "q6_sub", texto: "¿De derechas o de izquierdas?", opA: "Derechas ➡️", opB: "Izquierdas ⬅️", regla: "igual", dependeDe: { preguntaId: "q6", valorRequerido: "A" } },
-  { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria / Rompehielos", opB: "📜 Reglas de comportamiento y juegos", regla: "igual" }
+  { id: "q_chat_pref", texto: "¿Qué tipo de experiencia de chat prefieres?", opA: "🎲 Pregunta aleatoria", opB: "Chat con juego de rol", regla: "igual" },
+
+  // --- Preguntas seleccionadas por ti (continuación) ---
+  // (Orden: 3, 4, 5, 7, 9, 10, 14, 20, 26, 28, 30, 25, 23, 22)
+  { id: "q7", texto: "¿Tono estricto o amable/jugueteón?", opA: "Estricto ⛓️", opB: "Amable/Jugueteón 😊", regla: "igual" },
+  { id: "q8", texto: "¿BDSM como juego o como estilo de vida?", opA: "Juego 🎭", opB: "Estilo de vida 🧬", regla: "igual" },
+  { id: "q9", texto: "¿Tienes límites duros fijos o flexibles?", opA: "Fijos 🛑", opB: "Flexibles 🔄", regla: "igual" },
+  { id: "q10", texto: "¿Te gusta pedir/hacer fotos eróticas?", opA: "Sí 🌱", opB: "No 🚫", regla: "igual" },
+  { id: "q11", texto: "¿Prefieres usar palabra de seguridad o lenguaje natural?", opA: "Semáforo 🚦", opB: "Lenguaje natural 🗣️", regla: "igual" },
+  { id: "q12", texto: "¿Qué aftercare prefieres: mimos o espacio?", opA: "Mimos y caricias 🤗", opB: "Espacio y silencio 🧘", regla: "igual" },
+  { id: "q13", texto: "¿Protocolos rígidos o dinámica fluida?", opA: "Rígidos 📜", opB: "Fluida 🌊", regla: "igual" },
+  { id: "q14", texto: "¿Te atrae el Pet Play/Age Play o prefieres rol adulto?", opA: "Sí, me atrae 🐾", opB: "Rol adulto 👤", regla: "igual" },
+  { id: "q15", texto: "¿Te gusta la humillación severa?", opA: "Sí", opB: "No", regla: "igual" },
+  { id: "q16", texto: "Fuera del juego, ¿mantienes el rol o trato igualitario?", opA: "Mantengo el rol 👑", opB: "Trato igualitario 🤝", regla: "igual" },
+  { id: "q17", texto: "¿Convivirías con alguien que tuviera perro y gato?", opA: "Sí", opB: "No", regla: "igual" },
+  { id: "q18", texto: "¿Si puedes elegir, prefieres sesiones planeadas o espontáneas?", opA: "Planeadas 📋", opB: "Espontáneas 🎲", regla: "igual" },
+  { id: "q19", texto: "¿Qué admiras más: entrega/firmeza o creatividad/empatía?", opA: "Entrega/Firmeza 💪", opB: "Creatividad/Empatía 🎨", regla: "igual" },
+  { id: "q20", texto: "Si algo sale mal, ¿hablas al momento o necesitas tiempo?", opA: "Hablo al momento 🗣️", opB: "Necesito tiempo ⏳", regla: "igual" },
+    { id: "q21", texto: "¿Te jugarías en una partida de 4 en raya quién de los dos adopta el rol dominante?", opA: "Sí 🎲", opB: "No 🤔", regla: "igual" }
+
 ];
 
 // GRUPO 1: PREGUNTAS CASUALES (Chat Rompehielos)
