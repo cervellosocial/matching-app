@@ -101,10 +101,10 @@ const preguntasRompehielosProtocolar = [
 
 // REGLAS DE COMPORTAMIENTO ALEATORIAS (Chat Protocolar)
 const conjuntosDeNormas = [
-  "📜 **Protocolo Alpha:** 1. Mantener siempre la cortesía. 2. Aceptar los retos del juego 4 en Raya sin objeción. 3. Responder con honestidad a cada pregunta.",
-  "📜 **Protocolo de Respeto Y Dinámica:** 1. Usar un tono formal si el otro participante lo solicita. 2. Los límites acordados no se negocian durante el juego. 3. Priorizar el consenso explícito.",
-  "📜 **Protocolo de Juego Guiado:** 1. Cada movimiento fallido en el 4 en raya implica responder una pregunta del otro. 2. Mantener la fluidez en el chat. 3. Sinceridad absoluta.",
-  "📜 **Protocolo de Roles:** 1. Escuchar activamente las peticiones de la otra persona. 2. Definir una palabra de seguridad o pausa si es necesario. 3. Divertirse bajo el marco de reglas establecido."
+  "Habéis entrado en un sala de baño en el mundo Goreano. Aquí las/os kajirae son tratadas como posesiones; su valor es menor que el de una vaca o un caballo, y pueden ser utilizadas en cualquier momento y lugar. Su poder de decisión es nulo. ",
+  "Vuestras aldeas están en conflicto y uno de vosotros ha sido apresado por el otro e inmovilizado en un establo.",
+  "Estáis en un laboratorio ciberpunk. Uno de vosotros ha hackeado el sistema neuronal del otro, tomando el control sobre la capacidad de decisión del otro. ",
+  "Uno de vosotros ha cometido un delito y ha sido capturado por el otro, policía de profesión. Para ser liberado y librarte de la carcel, el detenido acepta el chantaje del otro."
 ];
 
 function obtenerChatId(user1, user2) {
