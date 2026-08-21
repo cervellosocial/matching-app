@@ -1,3 +1,9 @@
+window.toggleInteresTodos = function(elTodos) {
+  const items = document.querySelectorAll('.gen-interest-item');
+  items.forEach(item => {
+    item.checked = elTodos.checked;
+  });
+};
 // 1. IMPORTACIONES DE FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, get, child, update, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -150,6 +156,21 @@ window.guardarYEmparejar = async function() {
 
   if (!nombre || !pin || pin.length !== 4) return alert("El Nombre y un PIN exacto de 4 dígitos son obligatorios.");
 
+  // EXTRAER GÉNERO
+  const generoSel = document.querySelector('input[name="user-gender"]:checked');
+  if (!generoSel) return alert("Por favor, selecciona tu género.");
+  const genero = generoSel.value;
+
+  // EXTRAER INTERESES DE GÉNERO
+  const interesesSel = Array.from(document.querySelectorAll('.gen-interest-item:checked')).map(el => el.value);
+  const todosMarcado = document.getElementById("gen-interest-todos")?.checked;
+
+  if (!todosMarcado && interesesSel.length === 0) {
+    return alert("Por favor, selecciona al menos un género de tu interés (o 'Todos').");
+  }
+
+  const interesGenero = todosMarcado ? ["todos"] : interesesSel;
+
   const submitBtn = document.getElementById("submit-btn");
   if (submitBtn) {
     submitBtn.innerText = "Verificando...";
@@ -197,7 +218,17 @@ window.guardarYEmparejar = async function() {
       }
     }
 
-    const nuevoUsuario = { nombre, pin, edad, rangoBuscado: { min: minEdad, max: maxEdad }, respuestas, fecha: Date.now() };
+    const nuevoUsuario = { 
+      nombre, 
+      pin, 
+      edad, 
+      genero, 
+      interesGenero, 
+      rangoBuscado: { min: minEdad, max: maxEdad }, 
+      respuestas, 
+      fecha: Date.now() 
+    };
+    
     await push(ref(db, "usuarios"), nuevoUsuario);
     
     usuarioActualGlobal = nombre;
@@ -220,9 +251,24 @@ window.guardarYEmparejar = async function() {
 function calcularEmparejamientos(usuarioActual, listaUsuarios) {
   return listaUsuarios
     .filter(u => {
-      if (!u.edad || !u.rangoBuscado) return true;
-      return usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max &&
-             u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
+      // 1. FILTRO DE EDAD BIDIRECCIONAL
+      if (u.edad && u.rangoBuscado) {
+        const edadOk = usuarioActual.edad >= u.rangoBuscado.min && usuarioActual.edad <= u.rangoBuscado.max &&
+                       u.edad >= usuarioActual.rangoBuscado.min && u.edad <= usuarioActual.rangoBuscado.max;
+        if (!edadOk) return false;
+      }
+
+      // 2. FILTRO DE GÉNERO BIDIRECCIONAL
+      if (usuarioActual.genero && usuarioActual.interesGenero && u.genero && u.interesGenero) {
+        // ¿A mí me interesa su género?
+        const aBuscaB = usuarioActual.interesGenero.includes("todos") || usuarioActual.interesGenero.includes(u.genero);
+        // ¿A él/ella le interesa mi género?
+        const bBuscaA = u.interesGenero.includes("todos") || u.interesGenero.includes(usuarioActual.genero);
+
+        if (!aBuscaB || !bBuscaA) return false;
+      }
+
+      return true;
     })
     .map(u => {
       let aciertos = 0, desaciertos = 0, comparables = 0;
@@ -248,7 +294,6 @@ function calcularEmparejamientos(usuarioActual, listaUsuarios) {
     })
     .sort((a, b) => b.porcentajeMatch - a.porcentajeMatch);
 }
-
 function mostrarResultados(resultados, miNombre) {
   ocultarSecciones();
   const resultsSection = document.getElementById("results-section");
