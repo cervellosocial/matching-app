@@ -37,7 +37,6 @@ signInAnonymously(auth)
 
 // 4. DATOS, PREGUNTAS Y REGLAS
 const preguntas = [
- const preguntas = [
   // --- Preguntas proporcionadas por el usuario ---
   { id: "q1", texto: "¿Prefieres obedecer o ser obedecido?", opA: "Obedecer 🙇", opB: "Ser obedecido 👑", regla: "opuesto" },
   { id: "q2", texto: "¿Te gustan las inmovilizaciones?", opA: "Sí ⛓️", opB: "No 🚫", regla: "igual" },
