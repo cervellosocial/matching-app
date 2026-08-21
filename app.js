@@ -650,11 +650,11 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
     </div>
 
     <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-direction: column;">
-      <button id="btn-rompehielos" type="button" style="background: #eab308; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        🎲 Enviar Pregunta Aleatoria
+      <button id="btn-rompehielos" type="button" style="background: #2b2a2a; color: #ffffff; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        Enviar Pregunta Aleatoria
       </button>
-      <button id="btn-toggle-juego" type="button" style="background: #2b2a2a; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
-        ⚪ Abrir / Ocultar 4 en Raya
+      <button id="btn-toggle-juego" type="button" style="background: #990000; color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+        ⚫ Abrir / Ocultar 4 en Raya
       </button>
       
       <div id="juego-board-container" class="hidden" style="margin-top: 10px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #475569;">
