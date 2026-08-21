@@ -355,7 +355,7 @@ function mostrarResultados(resultados, miNombre) {
   const matchesFiltrados = resultados.filter(r => r.esMatch || r.esGilicrush);
 
   if (matchesFiltrados.length === 0) {
-    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! Aún no hay perfiles con el 90% de compatibilidad en tu rango. Puedes acceder desde el Buzón cuando haya nuevos perfiles.</p>";
+    matchesList.innerHTML = "<p style='color:#fff;'>¡Perfil registrado! De momento no tienes perfiles compatibles. A partir de ahora, para consultar si tienes compatibilidades, accede al BUZÓN desde la pantalla de inicio .</p>";
     return;
   }
 
