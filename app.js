@@ -49,24 +49,54 @@ const preguntas = [
 
 // GRUPO 1: PREGUNTAS CASUALES (Chat Rompehielos)
 const preguntasRompehielosCasual = [
-  "¿Cuál es tu lugar favorito para una cita informal?",
-  "¿Qué hobby te apasiona pero pocas personas conocen?",
-  "¿Prefieres una película en casa o una salida espontánea?",
-  "¿Qué es lo más divertido o extraño que te ha pasado esta semana?",
-  "¿Si pudieras viajar a cualquier lugar mañana mismo, a dónde irías?",
-  "¿Qué canción no puedes dejar de escuchar últimamente?",
-  "¿Eres más de madrugar o de trasnochar?"
+  "Si tuvieras que crear un nuevo sabor de helado que no existe, ¿cuál sería y qué nombre le pondrías?",
+  "¿Cuál es tu talento inútil favorito que te hace sentir increíblemente orgulloso/a?",
+  "Si pudieras elegir un tema musical que sonara cada vez que entras a una habitación, ¿cuál sería?",
+  "¿Qué animal te representa el lunes por la mañana y cuál el viernes por la tarde?",
+  "Si fueras un villano de película, ¿cuál sería tu plan maestro y por qué siempre fracasaría al final?",
+  "¿Cuál es esa cosa que todo el mundo parece amar pero tú secretamente odias?",
+  "Si tu personalidad fuera un cóctel, ¿qué ingredientes llevaría y cómo se llamaría?",
+  "¿Cuál es tu comida \"culpable\" que te comerías sin vergüenza frente a un chef de tres estrellas Michelin?",
+  "¿Qué serie o película podrías ver una y otra vez sin cansarte jamás?",
+  "Si tuvieras que vivir en un universo de ficción (sin poder volver), ¿cuál elegirías para no aburrirte nunca?",
+  "Si despertaras con la habilidad de hablar con los objetos de tu casa, ¿cuál sería el primero con el que hablarías y qué le preguntarías?",
+  "Si tuvieras que reemplazar tu mano derecha por un utensilio de cocina durante una semana, ¿cuál elegirías y cómo te las arreglarías?",
+  "Si pudieras ser el director de un reality show durante un día, ¿a quién seguirías y qué título le pondrías al episodio?",
+  "Si un genio te concediera el poder de hacer una tarea cotidiana de forma mágica, ¿cuál sería y por qué?",
+  "Si tuvieras que crear una ley tonta pero obligatoria para todo el mundo durante un día, ¿cuál sería?",
+  "¿Qué superpoder sería el más práctico para la vida diaria (sin ser algo obvio como volar o ser invisible)?",
+  "Si tuvieras que elegir entre solo poder comer alimentos de un color durante un mes o solo escuchar una canción en bucle, ¿cuál elegirías?",
+  "¿Cuál es tu estrategia infalible para procrastinar de forma creativa?",
+  "Si pudieras eliminar una pequeña molestia del mundo para siempre (como los calcetines que desaparecen o los atascos), ¿cuál sería?",
+  "¿Qué es algo que siempre quisiste probar pero nunca te has atrevido?"
 ];
 
 // GRUPO 2: PREGUNTAS DE ROL Y LÍMITES (Chat Protocolar)
 const preguntasRompehielosProtocolar = [
-  "¿Cuál es una regla o límite indispensable que siempre pones en una interacción?",
-  "¿Qué cualidad te impresiona más cuando alguien asume un rol de liderazgo?",
-  "Si tuvieras que definir tu estilo de comunicación en una palabra, ¿cuál sería?",
-  "¿Qué tipo de castigo suave o reto consideras divertido en una dinámica?",
-  "¿Qué detalle de protocolo o cortesía te llama más la atención?",
-  "¿Prefieres que las reglas sean estrictas o que se adapten sobre la marcha?",
-  "¿Qué valoras más: la disciplina total o la creatividad bajo ciertas normas?"
+ 
+ 
+  "¿Qué vivencia dentro del BDSM te gustaría volver a vivir y por qué?",
+  "¿Qué escenario te resulta más excitante: un lugar público y arriesgado o un espacio privado y controlado?",
+  "¿Cuál es la fantasía que aún no has cumplido y más te gustaría experimentar?",
+  "¿Estarías dispuesto/a a entregar o recibir el control total de los sentidos durante una sesión?",
+  "¿Qué situación de intercambio de poder te ha generado la adrenalina más intensa hasta ahora?",
+  "¿Qué elemento (cuerda, cuero, metal) despierta en ti una respuesta más fuerte y por qué?",
+  "¿Qué límite tuyo ha sido desafiado de la manera más placentera?",
+  "¿Qué tipo de juego (sensación, poder, rol) te ha provocado las emociones más profundas?",
+  "¿Qué es lo más extremo que te gustaría probar bajo las condiciones adecuadas?",
+  "¿Estarías dispuesto/a a participar en una experiencia sin saber qué esperar, confiando solo en tu pareja?",
+  "¿Qué ambiente (iluminación, música, temperatura) consideras fundamental para una sesión inolvidable?",
+  "¿Qué es lo que más te ha sorprendido de ti mismo/a en una situación límite?",
+  "¿Qué tipo de negación (orgásmica, de movimiento, sensorial) te resulta más estimulante, ya sea aplicándola o recibiéndola?",
+  "¿Qué es lo más largo que has estado en una dinámica de poder continua y qué sentiste al terminar?",
+  "¿Estarías dispuesto/a a explorar una dinámica de poder intensa durante un fin de semana?",
+  "¿Qué escenario natural (un bosque, la playa) te gustaría que fuera el escenario de una de tus vivencias?",
+  "¿Qué es lo que más valoras que haga tu pareja después de una sesión intensa?",
+  "¿Qué tipo de marca temporal (un arañazo, un morado) conservas o te gusta dejar con más gusto y por qué?",
+  "¿Qué es lo más lejos que llegarías para explorar una fantasía junto a tu pareja?",
+  "¿Qué situación de vulnerabilidad o de máxima responsabilidad te ha llevado a experimentar el mayor placer?"
+
+
 ];
 
 // REGLAS DE COMPORTAMIENTO ALEATORIAS (Chat Protocolar)
