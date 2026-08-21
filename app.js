@@ -642,7 +642,7 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
 
   list.innerHTML = `
     <div style="margin-bottom: 12px; text-align: left;">
-      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">⬅️ Volver a mis chats</button>
+      <button onclick="window.cargarListaChats('${miNombre}')" style="padding: 8px 14px; cursor: pointer; border-radius: 6px;">Volver a mis chats</button>
       <h3 style="margin-top:10px; color: #ffffff;">
         Chat con ${otroNombre} 
         <small style="color: #ccc;">(${porcentajeText} - Modo: ${tipoChat === 'protocolar' ? '📜 Protocolar' : '🎲 Rompehielos'})</small>
@@ -680,7 +680,7 @@ window.abrirSalaChat = async function(miNombre, otroNombre, porcentajeText) {
       />
       <button 
         id="btn-send-msg" 
-        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: #9d174d !important; color: #ffffff !important; border: none !important;"
+        style="width: 100% !important; height: 44px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; border-radius: 6px !important; background: 990000 !important; color: #ffffff !important; border: none !important;"
       >
         Enviar mensaje
       </button>
